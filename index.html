@@ -131,14 +131,20 @@ const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
 
 let user = null;
 
+async function login(){
+  const email = prompt("Введи email для входа:");
+  if(!email) return;
+
+  await supabase.auth.signInWithOtp({ email });
+  alert("Проверь почту 💌");
+}
+
 async function initAuth(){
   const { data } = await supabase.auth.getUser();
   user = data.user;
 
   if(!user){
-    await supabase.auth.signInWithOAuth({
-      provider: 'google'
-    });
+    login();
     return;
   }
 
@@ -156,6 +162,36 @@ let data = JSON.parse(localStorage.getItem("donaters") || "[]");
 
 function save() {
   localStorage.setItem("donaters", JSON.stringify(data));
+  saveToCloud();
+}
+
+async function loadFromCloud(){
+  const { data: row } = await supabase
+    .from('donaters')
+    .select('*')
+    .eq('user_id', user.id)
+    .single();
+
+  if(row){
+    data = row.data;
+    render();
+  } else {
+    await supabase.from('donaters').insert({
+      user_id: user.id,
+      data: data
+    });
+  }
+}
+
+async function saveToCloud(){
+  if(!user) return;
+
+  await supabase
+    .from('donaters')
+    .upsert({
+      user_id: user.id,
+      data: data
+    });
 }
 
 function calcTotal(user) {
@@ -181,11 +217,9 @@ function getBirthdayStatus(dateStr) {
   if (!dateStr) return null;
 
   const today = new Date();
-  const parts = dateStr.split("-");
-  if (parts.length < 3) return null;
-
-  const month = Number(parts[1]) - 1;
-  const day = Number(parts[2]);
+  const [y,m,d] = dateStr.split("-");
+  const month = Number(m)-1;
+  const day = Number(d);
 
   if (month !== today.getMonth()) return null;
 
@@ -231,7 +265,7 @@ function render() {
     tbody.appendChild(tr);
   });
 
-  save();
+  localStorage.setItem("donaters", JSON.stringify(data));
 }
 
 function addUser() {
@@ -245,6 +279,7 @@ function addUser() {
     notes:"",
     months:Array(12).fill(0)
   });
+  save();
   render();
 }
 
@@ -264,7 +299,7 @@ function openUser(index) {
     <input placeholder="TikTok" value="${u.tiktok}" onchange="update(${index},'tiktok',this.value)">
     <input type="date" value="${u.birthday}" onchange="update(${index},'birthday',this.value)">
     <input placeholder="Косплей" value="${u.cosplay}" onchange="update(${index},'cosplay',this.value)">
-    <textarea placeholder="Заметки" onchange="update(${index},'notes',this.value)">${u.notes}</textarea>
+    <textarea onchange="update(${index},'notes',this.value)">${u.notes}</textarea>
 
     <h3>Донаты</h3>
 
@@ -293,17 +328,20 @@ function closePanel() {
 
 function update(i,key,val){
   data[i][key] = val;
+  save();
   render();
 }
 
 function setMonth(i,m,val){
   data[i].months[m] = Number(val);
+  save();
   render();
   openUser(i);
 }
 
 function addMoney(i,m,amount){
   data[i].months[m] += amount;
+  save();
   render();
   openUser(i);
 }
