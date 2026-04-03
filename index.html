@@ -129,6 +129,22 @@ const SUPABASE_KEY = "sb_publishable_zYB0aPTJt0yvF_dnejRENQ_jvBSNMQ4"
 
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
 
+let user = null;
+
+async function initAuth(){
+  const { data } = await supabase.auth.getUser();
+  user = data.user;
+
+  if(!user){
+    await supabase.auth.signInWithOAuth({
+      provider: 'google'
+    });
+    return;
+  }
+
+  loadFromCloud();
+}
+
 const VIP_LEVELS = [50,150,300,500,750,1000,1500,2500,4000,6000];
 
 const months = [
@@ -292,6 +308,7 @@ function addMoney(i,m,amount){
   openUser(i);
 }
 
+initAuth();
 render();
 
 </script>
