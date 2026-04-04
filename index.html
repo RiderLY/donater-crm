@@ -176,7 +176,10 @@ tr:hover {
 const SUPABASE_URL = "YOUR_URL";
 const SUPABASE_ANON_KEY = "YOUR_KEY";
 
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+if (!window.db) {
+    window.db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+}
+
 
 let isLogin = true;
 
@@ -198,24 +201,25 @@ async function handleAuth() {
     if (!email || !password) return alert("Заполни поля");
 
     if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) return alert(error.message);
-    } else {
-        const { error } = await supabase.auth.signUp({ email, password });
-        if (error) return alert(error.message);
-        alert("Проверь почту для подтверждения");
-    }
+    const { error } = await db.auth.signInWithPassword({ email, password });
+    if (error) return alert(error.message);
+} else {
+    const { error } = await db.auth.signUp({ email, password });
+    if (error) return alert(error.message);
+    alert("Проверь почту для подтверждения");
+}
+
 
     checkUser();
 }
 
 async function logout() {
-    await supabase.auth.signOut();
-    location.reload();
+    await db.auth.signOut();
+location.reload();
 }
 
 async function checkUser() {
-    const { data } = await supabase.auth.getUser();
+    const { data } = await db.auth.getUser();
 
     if (data.user) {
         document.getElementById("auth").style.display = "none";
@@ -243,9 +247,10 @@ function getVIP(total) {
 
 async function loadDonators() {
 
-    const { data, error } = await supabase
-        .from("donators")
-        .select("*");
+    const { data, error } = await db
+    .from("donators")
+    .select("*");
+
 
     if (error) {
         console.log(error);
