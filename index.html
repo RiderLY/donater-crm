@@ -297,10 +297,17 @@ async function addMoney(id, amount){
 }
 
 async function deleteDonator(id){
+  alert("Сигнал дошел! Пытаюсь удалить ID: " + id); // <-- наш маячок
+
   const {error} = await db.from("donators").delete().eq("id", id);
-  if (error) alert("Ошибка удаления");
-  loadData();
+  
+  if (error) {
+    alert("Ошибка базы данных: " + error.message);
+  } else {
+    loadData();
+  }
 }
+
 
 </script>
 
