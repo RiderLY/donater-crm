@@ -182,12 +182,24 @@ tbody.appendChild(tr);
 }
 
 async function addDonator() {
-const name = prompt("Имя:");
-if (!name) return;
-const { data: { user } } = await db.auth.getUser();
-await db.from("donators").insert([{ name, total: 0, history: {}, user_id: user.id }]);
-loadData();
+async function addDonator() {
+    const name = document.getElementById("search").value;
+
+    if (!name) {
+        alert("Введи имя в поле поиска сверху");
+        return;
+    }
+
+    const { data: { user } } = await db.auth.getUser();
+
+    await db.from("donators").insert([
+        { name, total: 0, history: {}, user_id: user.id }
+    ]);
+
+    document.getElementById("search").value = "";
+    loadData();
 }
+
 
 async function openPanel(id) {
 currentId = id;
