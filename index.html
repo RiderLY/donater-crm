@@ -2,292 +2,140 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Stellar CRM FINAL</title>
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-:root{
---primary:#7c3aed;
---bg:#0b0b0f;
---card:#16161e;
---green:#10b981;
---text:#ececed;
-}
-
-*{margin:0;padding:0;box-sizing:border-box;font-family:Inter,system-ui}
-body{background:var(--bg);color:var(--text)}
-
-.app{display:none;padding:30px;max-width:1400px;margin:auto}
-
-.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:25px}
-
-input{background:#111;border:1px solid #2a2a3f;color:white;padding:10px;border-radius:8px}
-
-button{border:none;border-radius:8px;cursor:pointer;padding:8px 12px}
-
-.btn{background:var(--primary);color:white}
-.btn:hover{opacity:.9}
-
-.table{background:var(--card);border-radius:12px;overflow:hidden}
-table{width:100%;border-collapse:collapse}
-th,td{padding:14px;border-bottom:1px solid #2a2a3f}
-
-.vip{color:#a78bfa;font-weight:700;font-size:12px}
-
-.progress{height:4px;background:#222;border-radius:2px;margin-top:5px}
-.progress div{height:100%;background:var(--primary)}
-
-.fast-btn{font-size:10px;margin-right:4px;background:#222;color:#a78bfa}
-
-.top{color:gold;font-weight:700}
-
-.panel{
-position:fixed;
-top:0;
-right:-500px;
-width:420px;
-height:100%;
-background:var(--card);
-padding:25px;
-transition:.3s;
-overflow:auto;
-z-index:10;
-}
-
-.overlay{
-position:fixed;
-inset:0;
-background:rgba(0,0,0,.7);
-display:none;
-}
-
-.month-grid{
-display:grid;
-grid-template-columns:repeat(3,1fr);
-gap:8px;
-}
-
-.month{
-background:#111;
-padding:8px;
-border-radius:8px;
-text-align:center;
-}
-
-.month.active{border:1px solid var(--primary)}
-
-.search{
-padding:8px 12px;
-width:200px;
-}
+body{background:#0b0b0f;color:white;font-family:Inter;margin:0}
+#auth,#app{max-width:900px;margin:auto;padding:30px}
+input{width:100%;padding:10px;margin:10px 0;background:#111;border:1px solid #333;color:white;border-radius:8px}
+button{padding:10px;border:none;border-radius:8px;background:#7c3aed;color:white;cursor:pointer}
+table{width:100%;margin-top:20px;border-collapse:collapse}
+td,th{padding:10px;border-bottom:1px solid #222}
 </style>
 </head>
 <body>
 
-<div class="overlay" id="overlay" onclick="closePanel()"></div>
-
-<div class="app" id="app">
-
-<div class="header">
-<div>
-<h2>CRM FINAL 😈</h2>
-<input id="search" class="search" placeholder="Поиск..." oninput="load()">
+<div id="auth">
+<h2>Вход</h2>
+<input id="email" placeholder="Email">
+<input id="pass" type="password" placeholder="Пароль">
+<input id="invite" placeholder="Invite code">
+<button onclick="auth()">Войти</button>
 </div>
 
-<div>
-<button class="btn" onclick="addDonator()">+ Донатер</button>
+<div id="app" style="display:none">
+<h2>CRM 😈</h2>
+<button onclick="addDonator()">+ Донатер</button>
 <button onclick="logout()">Выход</button>
-</div>
-</div>
 
-<div class="table">
+<input id="search" placeholder="Поиск..." oninput="load()">
+
 <table>
 <thead>
-<tr>
-<th>VIP</th>
-<th>Имя</th>
-<th>Месяц</th>
-<th>Всего</th>
-<th></th>
-</tr>
+<tr><th>Имя</th><th>Месяц</th><th>Всего</th></tr>
 </thead>
 <tbody id="tbody"></tbody>
 </table>
 </div>
 
-</div>
-
-<div class="panel" id="panel">
-<h3 id="pName"></h3>
-
-<input id="eName" placeholder="Имя">
-<input id="eTG" placeholder="Telegram">
-<input id="eBD" placeholder="ДД.ММ">
-
-<h4 style="margin:10px 0">Месяцы</h4>
-<div id="months" class="month-grid"></div>
-
-<button class="btn" onclick="save()">Сохранить</button>
-<button onclick="closePanel()">Закрыть</button>
-</div>
-
 <script>
-
 const SUPABASE_URL="https://ltrglnjbsyokelkgqbbh.supabase.co";
-const SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx0cmdsbmpic3lvZWxrYWdxYmJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUxNzgyNDksImV4cCI6MjA5MDc1NDI0OX0.VhZiD9OVDfv3nlfYysBNXPsax4RkevErwWImMlqW9BM";
+const SUPABASE_ANON_KEY="ТВОЙ_KEY";
+const INVITE="STELLAR-PRO-2026";
 
 const db=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 
 const MONTHS=["Янв","Фев","Мар","Апр","Май","Июн","Июл","Авг","Сен","Окт","Ноя","Дек"];
-const VIP=[0,50,150,300,500,750,1000,1500,2500,4000,6000];
+const curMonth=()=>MONTHS[new Date().getMonth()];
 
-let current=null;
+async function auth(){
+const email=emailInput.value;
+const password=passInput.value;
+const invite=inviteInput.value;
 
-function curMonth(){return MONTHS[new Date().getMonth()]}
+let {error}=await db.auth.signInWithPassword({email,password});
 
-async function check(){
+if(error){
+if(invite!==INVITE)return alert("Нет доступа");
+
+await db.auth.signUp({email,password});
+await db.auth.signInWithPassword({email,password});
+}
+
+checkUser();
+}
+
+async function checkUser(){
 const {data:{user}}=await db.auth.getUser();
-if(!user){
-const email=prompt("Email");
-const pass=prompt("Pass");
-await db.auth.signInWithPassword({email,password:pass});
-location.reload();
-}else{
+
+if(user){
+auth.style.display="none";
 app.style.display="block";
 load();
 }
 }
-check();
+checkUser();
 
-function getVIP(total){
-let lvl=0;
-VIP.forEach((v,i)=>{if(total>=v)lvl=i});
-const next=VIP[lvl+1]||total;
-const prog=lvl>=10?100:((total-VIP[lvl])/(next-VIP[lvl]))*100;
-return{lvl,prog,next:next-total}
+function logout(){
+db.auth.signOut().then(()=>location.reload());
 }
 
 async function load(){
-const q=document.getElementById("search").value.toLowerCase();
+const q=search.value.toLowerCase();
 
-const {data}=await db.from("donators").select("*");
+const {data:{user}}=await db.auth.getUser();
+if(!user)return;
 
-let arr=data.filter(d=>!q||d.name?.toLowerCase().includes(q));
+const {data,error}=await db.from("donators")
+.select("*")
+.eq("user_id",user.id);
 
-arr.sort((a,b)=>(b.total||0)-(a.total||0));
+if(error||!data)return;
 
 tbody.innerHTML="";
 
-arr.forEach((d,i)=>{
-const vip=getVIP(d.total||0);
+data.filter(d=>!q||d.name?.toLowerCase().includes(q))
+.forEach(d=>{
 const m=(d.history||{})[curMonth()]||0;
 
-const tr=document.createElement("tr");
-
-tr.innerHTML=`
-<td><span class="vip ${i==0?'top':''}">VIP ${vip.lvl}</span></td>
+tbody.innerHTML+=`
+<tr>
 <td>${d.name}</td>
-<td>
-${m}€
-<br>
-<button class="fast-btn" onclick="addMoney('${d.id}',10)">+10</button>
-<button class="fast-btn" onclick="addMoney('${d.id}',50)">+50</button>
-</td>
+<td>${m}€ <button onclick="addMoney('${d.id}',10)">+10</button></td>
 <td>${d.total||0}€</td>
-<td><button onclick="openPanel('${d.id}')">⚡</button></td>
-`;
-
-tbody.appendChild(tr);
+</tr>`;
 });
 }
 
 async function addMoney(id,amt){
 const {data}=await db.from("donators").select("history").eq("id",id).single();
+if(!data)return;
+
 const h=data.history||{};
 const m=curMonth();
 
-h[m]=(h[m]||0)+amt;
+h[m]=(Number(h[m])||0)+amt;
 
-const total=Object.values(h).reduce((a,b)=>a+b,0);
+const total=Object.values(h).map(v=>Number(v)||0).reduce((a,b)=>a+b,0);
 
 await db.from("donators").update({history:h,total}).eq("id",id);
 
 load();
 }
 
-async function openPanel(id){
-current=id;
-
-const {data}=await db.from("donators").select("*").eq("id",id).single();
-
-eName.value=data.name||"";
-eTG.value=data.telegram||"";
-eBD.value=data.birthday||"";
-
-pName.innerText=data.name;
-
-months.innerHTML="";
-
-MONTHS.forEach(m=>{
-months.innerHTML+=`
-<div class="month ${m==curMonth()?'active':''}">
-${m}<br>
-<input value="${(data.history||{})[m]||0}" onchange="editMonth('${m}',this.value)">
-</div>
-`;
-});
-
-panel.style.right="0";
-overlay.style.display="block";
-}
-
-let tempHistory={};
-
-function editMonth(m,val){
-tempHistory[m]=Number(val)||0;
-}
-
-async function save(){
-
-const {data}=await db.from("donators").select("history").eq("id",current).single();
-
-const h={...(data.history||{}),...tempHistory};
-
-const total=Object.values(h).reduce((a,b)=>a+b,0);
-
-await db.from("donators").update({
-name:eName.value,
-telegram:eTG.value,
-birthday:eBD.value,
-history:h,
-total
-}).eq("id",current);
-
-tempHistory={};
-
-closePanel();
-load();
-}
-
-function closePanel(){
-panel.style.right="-500px";
-overlay.style.display="none";
-}
-
 async function addDonator(){
 const name=prompt("Имя");
 if(!name)return;
-await db.from("donators").insert([{name,total:0,history:{}}]);
+
+const {data:{user}}=await db.auth.getUser();
+if(!user)return;
+
+await db.from("donators").insert([{name,total:0,history:{},user_id:user.id}]);
+
 load();
 }
-
-function logout(){
-db.auth.signOut().then(()=>location.reload());
-}
-
 </script>
+
 </body>
 </html>
-
