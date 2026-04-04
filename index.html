@@ -99,6 +99,16 @@ const MASTER_INVITE = "STELLAR-PRO-2026"; // Тот самый код
 const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const MONTHS = ["Янв", "Фев", "Мар", "Апр", "Май", "Июн", "Июл", "Авг", "Сен", "Окт", "Ноя", "Дек"];
 let currentId = null;
+function getVip(total) {
+    if (total >= 1000) return { level: 5, name: "LEGEND", need: 0 };
+    if (total >= 500) return { level: 4, name: "ELITE", need: 1000 - total };
+    if (total >= 250) return { level: 3, name: "PRO", need: 500 - total };
+    if (total >= 100) return { level: 2, name: "SUPPORTER", need: 250 - total };
+    if (total >= 50) return { level: 1, name: "FAN", need: 100 - total };
+
+    return { level: 0, name: "NEW", need: 50 - total };
+}
+
 
 const getCurMonth = () => MONTHS[new Date().getMonth()];
 
