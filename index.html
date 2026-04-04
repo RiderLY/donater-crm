@@ -135,8 +135,8 @@ width:200px;
 
 <script>
 
-const SUPABASE_URL="YOUR_URL";
-const SUPABASE_ANON_KEY="YOUR_KEY";
+const SUPABASE_URL="https://xxxx.supabase.co";
+const SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx0cmdsbmpic3lvZWxrYWdxYmJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUxNzgyNDksImV4cCI6MjA5MDc1NDI0OX0.VhZiD9OVDfv3nlfYysBNXPsax4RkevErwWImMlqW9BM";
 
 const db=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 
@@ -290,3 +290,4 @@ db.auth.signOut().then(()=>location.reload());
 </script>
 </body>
 </html>
+
