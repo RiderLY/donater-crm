@@ -194,14 +194,21 @@ async function loadData(){
       <td>${d.name||""}</td>
       <td>${month}€</td>
       <td>${d.total||0}€</td>
-      <td style="text-align: right; display: flex; justify-content: flex-end; gap: 8px;">
+      <td style="text-align: right; display: flex; justify-content: flex-end; gap: 8px; align-items: center;">
         <button onclick="addMoney('${d.id}', 10)">+10</button>
         <button onclick="addMoney('${d.id}', 30)">+30</button>
+        <button onclick="addMoney('${d.id}', 50)">+50</button>
         <button onclick="addMoney('${d.id}', 100)">+100</button>
         
+        <div style="display: flex; gap: 4px; margin-left: 10px; background: #232336; padding: 2px; border-radius: 8px;">
+          <input type="number" id="custom_${d.id}" placeholder="Сумма" style="width: 70px; margin-bottom: 0; padding: 8px; background: transparent; text-align: center;">
+          <button onclick="addCustomMoney('${d.id}')" style="background: #44445c; padding: 8px 12px;">+</button>
+        </div>
+
         <button onclick="openPanel('${d.id}')" style="margin-left: 10px;">✎</button>
         <button onclick="deleteDonator('${d.id}')" style="background:#e11d48;">✕</button>
       </td>
+
 
     `;
     elTbody.appendChild(tr);
@@ -280,6 +287,18 @@ function closePanel() {
 }
 
 // MONEY
+// CUSTOM MONEY
+function addCustomMoney(id) {
+  const input = document.getElementById(`custom_${id}`);
+  const amount = parseFloat(input.value); 
+
+  if (!amount || amount <= 0) {
+    alert("Введите правильную сумму");
+    return;
+  }
+
+  addMoney(id, amount); 
+}
 
 async function addMoney(id, amount){
   const {data, error: fetchError} = await db.from("donators").select("*").eq("id", id).single();
