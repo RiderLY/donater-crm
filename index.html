@@ -1,222 +1,292 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stellar CRM: Chronos v2.5</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>
-        :root { --primary: #7c3aed; --bg: #0b0b0f; --card: #16161e; --green: #10b981; --text: #ececed; }
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', system-ui, sans-serif; }
-        body { background: var(--bg); color: var(--text); overflow-x: hidden; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stellar CRM FINAL</title>
 
-        .app { display: none; padding: 30px; max-width: 1400px; margin: 0 auto; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-        
-        /* Таблица */
-        .table-container { background: var(--card); border-radius: 16px; border: 1px solid #232336; box-shadow: 0 15px 35px rgba(0,0,0,0.4); }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 16px; text-align: left; border-bottom: 1px solid #232336; }
-        th { background: #1c1c28; color: #71717a; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-        /* VIP & Progress */
-        .vip-tag { font-weight: 800; font-size: 10px; color: #a78bfa; background: rgba(124, 58, 237, 0.1); padding: 4px 8px; border-radius: 5px; border: 1px solid rgba(124, 58, 237, 0.2); }
-        .progress-bg { width: 100%; height: 4px; background: #27272a; border-radius: 2px; margin-top: 8px; }
-        .progress-fill { height: 100%; background: var(--primary); border-radius: 2px; transition: 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
+<style>
+:root{
+--primary:#7c3aed;
+--bg:#0b0b0f;
+--card:#16161e;
+--green:#10b981;
+--text:#ececed;
+}
 
-        /* Месяцы в панели */
-        .month-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 20px; }
-        .month-item { background: #1c1c28; padding: 10px; border-radius: 10px; border: 1px solid #27272a; text-align: center; }
-        .month-item.active { border-color: var(--primary); background: rgba(124, 58, 237, 0.05); }
-        .month-name { font-size: 10px; color: #71717a; text-transform: uppercase; margin-bottom: 5px; }
+*{margin:0;padding:0;box-sizing:border-box;font-family:Inter,system-ui}
+body{background:var(--bg);color:var(--text)}
 
-        /* Кнопки */
-        button { cursor: pointer; border: none; border-radius: 8px; transition: 0.2s; font-weight: 600; }
-        .btn-add { background: var(--green); color: white; padding: 10px 20px; }
-        .fast-btn { background: #27272a; color: #a78bfa; padding: 4px 8px; font-size: 10px; border: 1px solid #3f3f46; margin-right: 4px; }
-        .fast-btn:hover { background: var(--primary); color: white; }
+.app{display:none;padding:30px;max-width:1400px;margin:auto}
 
-        /* Панель */
-        #panel { position: fixed; top: 0; right: -480px; width: 450px; height: 100%; background: var(--card); padding: 30px; transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1); z-index: 1000; overflow-y: auto; box-shadow: -10px 0 30px rgba(0,0,0,0.5); }
-        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); display: none; z-index: 900; }
-        input { width: 100%; background: #0b0b0f; border: 1px solid #27272a; color: white; padding: 12px; border-radius: 10px; margin-bottom: 15px; outline: none; }
-        input:focus { border-color: var(--primary); }
-    </style>
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:25px}
+
+input{background:#111;border:1px solid #2a2a3f;color:white;padding:10px;border-radius:8px}
+
+button{border:none;border-radius:8px;cursor:pointer;padding:8px 12px}
+
+.btn{background:var(--primary);color:white}
+.btn:hover{opacity:.9}
+
+.table{background:var(--card);border-radius:12px;overflow:hidden}
+table{width:100%;border-collapse:collapse}
+th,td{padding:14px;border-bottom:1px solid #2a2a3f}
+
+.vip{color:#a78bfa;font-weight:700;font-size:12px}
+
+.progress{height:4px;background:#222;border-radius:2px;margin-top:5px}
+.progress div{height:100%;background:var(--primary)}
+
+.fast-btn{font-size:10px;margin-right:4px;background:#222;color:#a78bfa}
+
+.top{color:gold;font-weight:700}
+
+.panel{
+position:fixed;
+top:0;
+right:-500px;
+width:420px;
+height:100%;
+background:var(--card);
+padding:25px;
+transition:.3s;
+overflow:auto;
+z-index:10;
+}
+
+.overlay{
+position:fixed;
+inset:0;
+background:rgba(0,0,0,.7);
+display:none;
+}
+
+.month-grid{
+display:grid;
+grid-template-columns:repeat(3,1fr);
+gap:8px;
+}
+
+.month{
+background:#111;
+padding:8px;
+border-radius:8px;
+text-align:center;
+}
+
+.month.active{border:1px solid var(--primary)}
+
+.search{
+padding:8px 12px;
+width:200px;
+}
+</style>
 </head>
 <body>
 
 <div class="overlay" id="overlay" onclick="closePanel()"></div>
 
 <div class="app" id="app">
-    <div class="header">
-        <h1>CHRONOS <span style="color: var(--primary)">CRM</span></h1>
-        <div style="display: flex; gap: 10px;">
-            <button class="btn-add" onclick="addDonator()">+ Добавить</button>
-            <button onclick="logout()" style="background:#27272a; color:white; padding:10px 15px;">Выход</button>
-        </div>
-    </div>
 
-    <div class="table-container">
-        <table>
-            <thead>
-                <tr>
-                    <th width="80">Rank</th>
-                    <th width="280">Спонсор & Прогресс</th>
-                    <th id="currentMonthHead">Месяц</th>
-                    <th>Всего</th>
-                    <th>Действие</th>
-                </tr>
-            </thead>
-            <tbody id="tableBody"></tbody>
-        </table>
-    </div>
+<div class="header">
+<div>
+<h2>CRM FINAL 😈</h2>
+<input id="search" class="search" placeholder="Поиск..." oninput="load()">
 </div>
 
-<div id="panel">
-    <h2 id="panelTitle" style="color: var(--primary); margin-bottom: 20px;">Карточка</h2>
-    
-    <label style="font-size: 11px; color: #71717a;">ДАННЫЕ ПРОФИЛЯ</label>
-    <input id="editName" placeholder="Имя">
-    <input id="editTG" placeholder="Telegram @">
-    <input id="editBD" placeholder="День рождения (ДД.ММ)">
+<div>
+<button class="btn" onclick="addDonator()">+ Донатер</button>
+<button onclick="logout()">Выход</button>
+</div>
+</div>
 
-    <label style="font-size: 11px; color: #71717a;">ИСТОРИЯ ДОНАТОВ (2024)</label>
-    <div class="month-grid" id="monthGrid"></div>
+<div class="table">
+<table>
+<thead>
+<tr>
+<th>VIP</th>
+<th>Имя</th>
+<th>Месяц</th>
+<th>Всего</th>
+<th></th>
+</tr>
+</thead>
+<tbody id="tbody"></tbody>
+</table>
+</div>
 
-    <div style="margin-top: 30px; display: grid; gap: 10px;">
-        <button class="btn-add" style="width: 100%;" onclick="saveDonator()">Сохранить всё</button>
-        <button onclick="closePanel()" style="background:transparent; color:#71717a;">Закрыть</button>
-    </div>
+</div>
+
+<div class="panel" id="panel">
+<h3 id="pName"></h3>
+
+<input id="eName" placeholder="Имя">
+<input id="eTG" placeholder="Telegram">
+<input id="eBD" placeholder="ДД.ММ">
+
+<h4 style="margin:10px 0">Месяцы</h4>
+<div id="months" class="month-grid"></div>
+
+<button class="btn" onclick="save()">Сохранить</button>
+<button onclick="closePanel()">Закрыть</button>
 </div>
 
 <script>
-const SUPABASE_URL = "YOUR_URL";
-const SUPABASE_ANON_KEY = "YOUR_KEY";
-const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-const MONTHS = ["Янв", "Фев", "Мар", "Апр", "Май", "Июн", "Июл", "Авг", "Сен", "Окт", "Ноя", "Дек"];
-const VIP_LIMITS = [0, 50, 150, 300, 500, 750, 1000, 1500, 2500, 4000, 6000];
-let currentId = null;
+const SUPABASE_URL="YOUR_URL";
+const SUPABASE_ANON_KEY="YOUR_KEY";
 
-const getCurrentMonth = () => MONTHS[new Date().getMonth()];
+const db=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 
-// --- AUTH ---
-async function checkUser() {
-    const { data: { user } } = await db.auth.getUser();
-    if (!user) {
-        const email = prompt("Email:"), pass = prompt("Pass:");
-        await db.auth.signInWithPassword({ email, password: pass });
-        location.reload();
-    } else {
-        document.getElementById("app").style.display = "block";
-        document.getElementById("currentMonthHead").innerText = `Месяц (${getCurrentMonth()})`;
-        loadDonators();
-    }
+const MONTHS=["Янв","Фев","Мар","Апр","Май","Июн","Июл","Авг","Сен","Окт","Ноя","Дек"];
+const VIP=[0,50,150,300,500,750,1000,1500,2500,4000,6000];
+
+let current=null;
+
+function curMonth(){return MONTHS[new Date().getMonth()]}
+
+async function check(){
+const {data:{user}}=await db.auth.getUser();
+if(!user){
+const email=prompt("Email");
+const pass=prompt("Pass");
+await db.auth.signInWithPassword({email,password:pass});
+location.reload();
+}else{
+app.style.display="block";
+load();
 }
-const logout = () => db.auth.signOut().then(() => location.reload());
-checkUser();
-
-// --- LOGIC ---
-function getVIP(total) {
-    let level = 0;
-    VIP_LIMITS.forEach((lim, i) => { if (total >= lim) level = i; });
-    const next = VIP_LIMITS[level + 1] || total;
-    const prog = level >= 10 ? 100 : ((total - VIP_LIMITS[level]) / (next - VIP_LIMITS[level])) * 100;
-    return { level, prog, toNext: next - total };
 }
+check();
 
-async function loadDonators() {
-    const { data, error } = await db.from("donators").select("*");
-    if (error) return;
-
-    const tbody = document.getElementById("tableBody");
-    tbody.innerHTML = "";
-    data.sort((a, b) => (b.total || 0) - (a.total || 0));
-
-    data.forEach(d => {
-        const vip = getVIP(d.total || 0);
-        const curMonthVal = (d.history && d.history[getCurrentMonth()]) || 0;
-        
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-            <td><span class="vip-tag">LVL ${vip.level}</span></td>
-            <td>
-                <div style="font-weight:700;">${d.name}</div>
-                <div class="progress-bg"><div class="progress-fill" style="width:${vip.prog}%"></div></div>
-                <div style="font-size:9px; color:#71717a; margin-top:4px;">До LVL ${vip.level+1}: ${vip.toNext}€</div>
-            </td>
-            <td>
-                <div style="font-size:16px; font-weight:800;">${curMonthVal} €</div>
-                <button class="fast-btn" onclick="addMoney('${d.id}', 10)">+10</button>
-                <button class="fast-btn" onclick="addMoney('${d.id}', 50)">+50</button>
-            </td>
-            <td style="color:var(--green); font-weight:800;">${d.total || 0} €</td>
-            <td><button class="fast-btn" onclick="openDetails('${d.id}')">ПРОФИЛЬ</button></td>
-        `;
-        tbody.appendChild(tr);
-    });
+function getVIP(total){
+let lvl=0;
+VIP.forEach((v,i)=>{if(total>=v)lvl=i});
+const next=VIP[lvl+1]||total;
+const prog=lvl>=10?100:((total-VIP[lvl])/(next-VIP[lvl]))*100;
+return{lvl,prog,next:next-total}
 }
 
-async function addMoney(id, amt) {
-    const { data } = await db.from("donators").select("history, total").eq("id", id).single();
-    const history = data.history || {};
-    const curMonth = getCurrentMonth();
-    
-    history[curMonth] = (history[curMonth] || 0) + amt;
-    const newTotal = Object.values(history).reduce((a, b) => a + b, 0);
+async function load(){
+const q=document.getElementById("search").value.toLowerCase();
 
-    await db.from("donators").update({ history, total: newTotal }).eq("id", id);
-    loadDonators();
+const {data}=await db.from("donators").select("*");
+
+let arr=data.filter(d=>!q||d.name?.toLowerCase().includes(q));
+
+arr.sort((a,b)=>(b.total||0)-(a.total||0));
+
+tbody.innerHTML="";
+
+arr.forEach((d,i)=>{
+const vip=getVIP(d.total||0);
+const m=(d.history||{})[curMonth()]||0;
+
+const tr=document.createElement("tr");
+
+tr.innerHTML=`
+<td><span class="vip ${i==0?'top':''}">VIP ${vip.lvl}</span></td>
+<td>${d.name}</td>
+<td>
+${m}€
+<br>
+<button class="fast-btn" onclick="addMoney('${d.id}',10)">+10</button>
+<button class="fast-btn" onclick="addMoney('${d.id}',50)">+50</button>
+</td>
+<td>${d.total||0}€</td>
+<td><button onclick="openPanel('${d.id}')">⚡</button></td>
+`;
+
+tbody.appendChild(tr);
+});
 }
 
-async function openDetails(id) {
-    currentId = id;
-    const { data } = await db.from("donators").select("*").eq("id", id).single();
-    
-    document.getElementById("panelTitle").innerText = data.name;
-    document.getElementById("editName").value = data.name || "";
-    document.getElementById("editTG").value = data.telegram || "";
-    document.getElementById("editBD").value = data.birthday || "";
-    
-    const grid = document.getElementById("monthGrid");
-    grid.innerHTML = "";
-    const history = data.history || {};
-    
-    MONTHS.forEach(m => {
-        const isActive = m === getCurrentMonth();
-        grid.innerHTML += `
-            <div class="month-item ${isActive ? 'active' : ''}">
-                <div class="month-name">${m}</div>
-                <div style="font-weight:bold;">${history[m] || 0}€</div>
-            </div>
-        `;
-    });
+async function addMoney(id,amt){
+const {data}=await db.from("donators").select("history").eq("id",id).single();
+const h=data.history||{};
+const m=curMonth();
 
-    document.getElementById("panel").style.right = "0";
-    document.getElementById("overlay").style.display = "block";
+h[m]=(h[m]||0)+amt;
+
+const total=Object.values(h).reduce((a,b)=>a+b,0);
+
+await db.from("donators").update({history:h,total}).eq("id",id);
+
+load();
 }
 
-const closePanel = () => {
-    document.getElementById("panel").style.right = "-480px";
-    document.getElementById("overlay").style.display = "none";
-};
+async function openPanel(id){
+current=id;
 
-async function saveDonator() {
-    await db.from("donators").update({
-        name: document.getElementById("editName").value,
-        telegram: document.getElementById("editTG").value,
-        birthday: document.getElementById("editBD").value
-    }).eq("id", currentId);
-    closePanel(); loadDonators();
+const {data}=await db.from("donators").select("*").eq("id",id).single();
+
+eName.value=data.name||"";
+eTG.value=data.telegram||"";
+eBD.value=data.birthday||"";
+
+pName.innerText=data.name;
+
+months.innerHTML="";
+
+MONTHS.forEach(m=>{
+months.innerHTML+=`
+<div class="month ${m==curMonth()?'active':''}">
+${m}<br>
+<input value="${(data.history||{})[m]||0}" onchange="editMonth('${m}',this.value)">
+</div>
+`;
+});
+
+panel.style.right="0";
+overlay.style.display="block";
 }
 
-async function addDonator() {
-    const name = prompt("Имя:");
-    if (name) {
-        await db.from("donators").insert([{ name, total: 0, history: {} }]);
-        loadDonators();
-    }
+let tempHistory={};
+
+function editMonth(m,val){
+tempHistory[m]=Number(val)||0;
 }
+
+async function save(){
+
+const {data}=await db.from("donators").select("history").eq("id",current).single();
+
+const h={...(data.history||{}),...tempHistory};
+
+const total=Object.values(h).reduce((a,b)=>a+b,0);
+
+await db.from("donators").update({
+name:eName.value,
+telegram:eTG.value,
+birthday:eBD.value,
+history:h,
+total
+}).eq("id",current);
+
+tempHistory={};
+
+closePanel();
+load();
+}
+
+function closePanel(){
+panel.style.right="-500px";
+overlay.style.display="none";
+}
+
+async function addDonator(){
+const name=prompt("Имя");
+if(!name)return;
+await db.from("donators").insert([{name,total:0,history:{}}]);
+load();
+}
+
+function logout(){
+db.auth.signOut().then(()=>location.reload());
+}
+
 </script>
 </body>
 </html>
