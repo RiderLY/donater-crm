@@ -314,11 +314,19 @@ async function deleteCurrent() {
 
 // --- UTILS ---
 function getVIP(t) {
-    if(t>=6000) return "SUPREME"; if(t>=4000) return "MYTHIC"; if(t>=2500) return "LEGEND";
-    if(t>=1500) return "ROYAL"; if(t>=1000) return "ELITE"; if(t>=750) return "DIAMOND";
-    if(t>=500) return "PLATINUM"; if(t>=300) return "GOLD"; if(t>=150) return "SILVER";
-    return t>=50 ? "START" : "NEW";
+    if (t >= 6000) return "VIP 10 SUPREME";
+    if (t >= 4000) return "VIP 9 MYTHIC";
+    if (t >= 2500) return "VIP 8 LEGEND";
+    if (t >= 1500) return "VIP 7 ROYAL";
+    if (t >= 1000) return "VIP 6 ELITE";
+    if (t >= 750)  return "VIP 5 DIAMOND";
+    if (t >= 500)  return "VIP 4 PLATINUM";
+    if (t >= 300)  return "VIP 3 GOLD";
+    if (t >= 150)  return "VIP 2 SILVER";
+    if (t >= 50)   return "VIP 1 START";
+    return "VIP 0 NEW";
 }
+
 
 function getNextTarget(t) {
     const goals = [50, 150, 300, 500, 750, 1000, 1500, 2500, 4000, 6000];
@@ -342,3 +350,5 @@ function addCustomMoney(id) {
 </script>
 </body>
 </html>
+
+
