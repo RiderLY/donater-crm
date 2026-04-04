@@ -153,6 +153,11 @@ const { data, error } = await db
     .from("donators")
     .select("*");
 
+console.log("DATA:", data);
+console.log("ERROR:", error);
+
+
+
 
 if (error || !data) return;
 
