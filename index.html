@@ -3,221 +3,288 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Donater CRM</title>
+<title>Donators CRM</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-:root{
-  --bg:#0d0b14;
-  --card:#171327;
-  --accent:#7c3aed;
-  --text:#fff;
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: system-ui;
 }
 
-body{margin:0;font-family:sans-serif;background:var(--bg);color:var(--text)}
-.container{padding:20px}
-.hidden{display:none}
-button{background:var(--accent);border:none;color:#fff;padding:6px 10px;border-radius:6px;cursor:pointer}
-input,textarea{width:100%;background:#111;border:1px solid #333;color:#fff;padding:6px;border-radius:6px}
+body {
+    background: #0f0f14;
+    color: white;
+}
 
-/* table */
-table{width:100%;border-collapse:collapse}
-th,td{padding:10px;border-bottom:1px solid #222}
-tr:hover{background:#1f1a33}
+/* AUTH */
 
-/* panel */
-.panel{position:fixed;top:0;right:-420px;width:420px;height:100%;background:var(--card);transition:.3s;padding:20px;overflow:auto}
-.panel.open{right:0}
+.auth-container {
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
 
-.month-row{display:flex;gap:5px;margin-bottom:6px;padding:4px;border-radius:6px;align-items:center}
-.month-row.active{background:#2b1f5e}
-.month-row.has{background:#1f1a33}
-.month-row.zero{opacity:.5}
+.auth-box {
+    background: #181825;
+    padding: 30px;
+    border-radius: 16px;
+    width: 320px;
+}
+
+.auth-box h2 {
+    margin-bottom: 20px;
+}
+
+input {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 12px;
+    border-radius: 8px;
+    border: none;
+    background: #232336;
+    color: white;
+}
+
+button {
+    width: 100%;
+    padding: 10px;
+    background: #7c3aed;
+    border: none;
+    border-radius: 8px;
+    color: white;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+button:hover {
+    opacity: 0.8;
+}
+
+.toggle {
+    margin-top: 10px;
+    text-align: center;
+    cursor: pointer;
+    color: #aaa;
+}
+
+/* APP */
+
+.app {
+    display: none;
+    padding: 20px;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.logout {
+    width: auto;
+    padding: 8px 16px;
+}
+
+/* TABLE */
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #181825;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+th, td {
+    padding: 12px;
+    text-align: left;
+}
+
+th {
+    background: #1f1f2e;
+}
+
+tr {
+    border-bottom: 1px solid #2a2a3f;
+}
+
+tr:hover {
+    background: #22223a;
+}
+
+.vip {
+    color: #a78bfa;
+    font-weight: bold;
+}
+
+.open-btn {
+    padding: 6px 10px;
+    font-size: 12px;
+}
+
 </style>
 </head>
-
 <body>
 
-<div id="auth" class="container">
-<h2 id="modeTitle">Вход</h2>
-<input id="email" placeholder="Email">
-<input id="password" type="password" placeholder="Пароль">
-<button id="mainBtn">Войти</button>
-<button onclick="toggleMode()">Регистрация</button>
-<p id="status"></p>
+<div class="auth-container" id="auth">
+    <div class="auth-box">
+        <h2 id="authTitle">Вход</h2>
+
+        <input type="email" id="email" placeholder="Email">
+        <input type="password" id="password" placeholder="Пароль">
+
+        <button onclick="auth()">Продолжить</button>
+
+        <div class="toggle" onclick="toggleMode()">
+            Нет аккаунта? Регистрация
+        </div>
+    </div>
 </div>
 
-<div id="app" class="hidden">
-<div class="container">
-<h1>Donaters</h1>
-<button onclick="logout()">Выйти</button>
-<button onclick="addUser()">+ Добавить</button>
+<div class="app" id="app">
+    <div class="header">
+        <h2>Donators CRM</h2>
+        <button class="logout" onclick="logout()">Выйти</button>
+    </div>
 
-<table>
-<thead>
-<tr>
-<th>VIP</th>
-<th>Ник</th>
-<th>Месяц €</th>
-<th>Всего €</th>
-<th>TG</th>
-<th>TikTok</th>
-<th>Open</th>
-</tr>
-</thead>
-<tbody id="table"></tbody>
-</table>
-</div>
-
-<div id="panel" class="panel"></div>
+    <table>
+        <thead>
+            <tr>
+                <th>VIP</th>
+                <th>Имя</th>
+                <th>Месяц (€)</th>
+                <th>Всего (€)</th>
+                <th>Telegram</th>
+                <th>TikTok</th>
+                <th>ДР</th>
+                <th>Косплей</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+    </table>
 </div>
 
 <script>
-// ===== AUTH (через Supabase REST без SDK) =====
-const SUPABASE_URL = "https://ltrglnjbsyoelkagqbbh.supabase.co";
-const API_KEY = "sb_publishable_zYB0aPTJt0yvF_dnejRENQ_jvBSNMQ4";
 
-let session = JSON.parse(localStorage.getItem("session"));
+// 🔑 ВСТАВЬ СВОИ ДАННЫЕ
+const SUPABASE_URL = "YOUR_URL";
+const SUPABASE_ANON_KEY = "YOUR_KEY";
 
-async function authRequest(type,email,password){
-  const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`,{
-    method:"POST",
-    headers:{
-      "Content-Type":"application/json",
-      "apikey":API_KEY
-    },
-    body:JSON.stringify({email,password})
-  });
-
-  if(!res.ok) throw new Error("Ошибка авторизации");
-  return res.json();
-}
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let isLogin = true;
 
-function toggleMode(){
-  isLogin = !isLogin;
-  modeTitle.innerText = isLogin?"Вход":"Регистрация";
-  mainBtn.innerText = isLogin?"Войти":"Создать аккаунт";
+// ================= AUTH =================
+
+function toggleMode() {
+    isLogin = !isLogin;
+    document.getElementById("authTitle").innerText = isLogin ? "Вход" : "Регистрация";
+    document.querySelector(".toggle").innerText = isLogin 
+        ? "Нет аккаунта? Регистрация"
+        : "Уже есть аккаунт? Вход";
 }
 
-mainBtn.onclick = async ()=>{
-  try{
-    const email = email.value.trim();
-    const password = password.value.trim();
+async function auth() {
+    const email = emailInput.value;
+    const password = passwordInput.value;
 
-    const data = await authRequest(isLogin?"login":"register",email,password);
-    localStorage.setItem("session",JSON.stringify(data));
-    startApp();
-  }catch(e){
-    status.innerText = e.message;
-  }
+    if (!email || !password) return alert("Заполни поля");
+
+    if (isLogin) {
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) return alert(error.message);
+    } else {
+        const { error } = await supabase.auth.signUp({ email, password });
+        if (error) return alert(error.message);
+        alert("Проверь почту для подтверждения");
+    }
+
+    checkUser();
 }
 
-function logout(){
-  localStorage.removeItem("session");
-  location.reload();
+async function logout() {
+    await supabase.auth.signOut();
+    location.reload();
 }
 
-// ===== DATA =====
-const VIP = [50,150,300,500,750,1000,1500,2500,4000,6000];
-const months = ["Янв","Фев","Мар","Апр","Май","Июн","Июл","Авг","Сен","Окт","Ноя","Дек"];
+async function checkUser() {
+    const { data } = await supabase.auth.getUser();
 
-let data = JSON.parse(localStorage.getItem("donaters")||"[]");
-
-function save(){
-  localStorage.setItem("donaters",JSON.stringify(data));
+    if (data.user) {
+        document.getElementById("auth").style.display = "none";
+        document.getElementById("app").style.display = "block";
+        loadDonators();
+    }
 }
 
-function total(u){return u.months.reduce((a,b)=>a+Number(b||0),0)}
+checkUser();
 
-function vip(t){
-  let lvl=0;
-  VIP.forEach((v,i)=>{if(t>=v)lvl=i+1});
-  return lvl;
+// ================= DATA =================
+
+function getVIP(total) {
+    const levels = [50,150,300,500,750,1000,1500,2500,4000,6000];
+    let vip = 0;
+
+    for (let i = 0; i < levels.length; i++) {
+        if (total >= levels[i]) vip = i + 1;
+    }
+
+    return vip;
 }
 
-function nextVip(t){
-  for(let v of VIP){if(t<v)return v-t}
-  return 0;
+// ================= TABLE =================
+
+async function loadDonators() {
+
+    const { data, error } = await supabase
+        .from("donators")
+        .select("*");
+
+    if (error) {
+        console.log(error);
+        return;
+    }
+
+    renderTable(data);
 }
 
-function render(){
-  data.forEach(u=>{
-    u.total=total(u);
-    u.vip=vip(u.total);
-  });
+function renderTable(data) {
+    const tbody = document.getElementById("tableBody");
+    tbody.innerHTML = "";
 
-  data.sort((a,b)=>b.vip-a.vip||b.total-a.total);
+    data.sort((a, b) => {
+        const vipA = getVIP(a.total || 0);
+        const vipB = getVIP(b.total || 0);
 
-  table.innerHTML="";
-  const m=new Date().getMonth();
+        if (vipB !== vipA) return vipB - vipA;
+        return (b.total || 0) - (a.total || 0);
+    });
 
-  data.forEach((u,i)=>{
-    const tr=document.createElement("tr");
-    tr.innerHTML=`
-    <td>VIP ${u.vip}</td>
-    <td>${u.nick||""}</td>
-    <td>${u.months[m]||0}</td>
-    <td>${u.total}</td>
-    <td>${u.telegram||""}</td>
-    <td>${u.tiktok||""}</td>
-    <td><button onclick="openUser(${i})">Open</button></td>
-    `;
-    table.appendChild(tr);
-  });
+    data.forEach(d => {
+        const tr = document.createElement("tr");
 
-  save();
+        tr.innerHTML = `
+            <td class="vip">VIP ${getVIP(d.total || 0)}</td>
+            <td>${d.name || "-"}</td>
+            <td>${d.month || 0}</td>
+            <td>${d.total || 0}</td>
+            <td>${d.telegram ? `<a href="${d.telegram}" target="_blank">link</a>` : "-"}</td>
+            <td>${d.tiktok ? `<a href="${d.tiktok}" target="_blank">link</a>` : "-"}</td>
+            <td>${d.birthday || "-"}</td>
+            <td>${d.cosplay || "-"}</td>
+            <td><button class="open-btn">Open</button></td>
+        `;
+
+        tbody.appendChild(tr);
+    });
 }
 
-function addUser(){
-  data.push({nick:"",telegram:"",tiktok:"",birthday:"",cosplay:"",notes:"",months:Array(12).fill(0)});
-  render();
-}
-
-function openUser(i){
-  const u=data[i];
-  panel.classList.add("open");
-
-  panel.innerHTML=`
-  <h2>${u.nick||"User"}</h2>
-
-  <input placeholder="Ник" value="${u.nick}" onchange="upd(${i},'nick',this.value)">
-  <input placeholder="Telegram" value="${u.telegram}" onchange="upd(${i},'telegram',this.value)">
-  <input placeholder="TikTok" value="${u.tiktok}" onchange="upd(${i},'tiktok',this.value)">
-  <textarea placeholder="Заметки" onchange="upd(${i},'notes',this.value)">${u.notes}</textarea>
-
-  ${months.map((m,mi)=>{
-    const val=u.months[mi];
-    return `
-    <div class="month-row ${mi===new Date().getMonth()?'active':''} ${val>0?'has':'zero'}">
-      <span>${m}</span>
-      <input type="number" value="${val}" onchange="setM(${i},${mi},this.value)">
-      <button onclick="addM(${i},${mi},10)">+10</button>
-      <button onclick="addM(${i},${mi},30)">+30</button>
-      <button onclick="addM(${i},${mi},50)">+50</button>
-      <button onclick="addM(${i},${mi},100)">+100</button>
-    </div>`;
-  }).join("")}
-
-  <p>Всего: ${u.total}</p>
-  <p>VIP: ${u.vip}</p>
-  <p>До следующего: ${nextVip(u.total)}</p>
-
-  <button onclick="panel.classList.remove('open')">Закрыть</button>
-  `;
-}
-
-function upd(i,k,v){data[i][k]=v;render()}
-function setM(i,m,v){data[i].months[m]=Number(v);render();openUser(i)}
-function addM(i,m,a){data[i].months[m]+=a;render();openUser(i)}
-
-function startApp(){
-  auth.classList.add("hidden");
-  app.classList.remove("hidden");
-  render();
-}
-
-if(session) startApp();
 </script>
 
 </body>
