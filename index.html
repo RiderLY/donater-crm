@@ -1,113 +1,179 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Donater CRM</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    body { font-family: Arial; background:#0f0f14; color:white; text-align:center; }
-    .box { margin:20px auto; padding:20px; max-width:400px; background:#1c1c24; border-radius:12px; }
-    input, button { margin:10px; padding:10px; border-radius:8px; border:none; }
-    button { background:#6c5cff; color:white; cursor:pointer; }
-    .hidden { display:none; }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Donater CRM</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+body { font-family: Arial; background:#0f0f14; color:white; }
+.container { max-width:800px; margin:auto; }
+.box { background:#1c1c24; padding:20px; border-radius:12px; margin-top:20px; }
+input, select { padding:8px; border-radius:8px; border:none; margin:5px; }
+button { padding:8px 12px; border:none; border-radius:8px; background:#6c5cff; color:white; cursor:pointer; margin:3px; }
+.hidden { display:none; }
+.card { background:#2a2a35; padding:10px; border-radius:10px; margin-top:10px; }
+.top { border:2px solid gold; }
+</style>
 </head>
 <body>
 
+<div class="container">
 <h1>Donater CRM</h1>
 
 <div id="auth" class="box">
-  <h2>Вход</h2>
-  <input id="email" placeholder="Email" />
-  <button onclick="login()">Войти</button>
-  <p id="authStatus"></p>
+<h2>Вход</h2>
+<input id="email" placeholder="Email">
+<input id="password" type="password" placeholder="Пароль">
+<button onclick="login()">Войти</button>
+<button onclick="register()">Регистрация</button>
+<p id="authStatus"></p>
 </div>
 
-<div id="app" class="box hidden">
-  <h2>Ты вошла 🎉</h2>
-  <button onclick="logout()">Выйти</button>
-  <hr>
-  <textarea id="data" placeholder="Данные донатеров JSON"></textarea>
-  <br>
-  <button onclick="saveData()">Сохранить</button>
+<div id="app" class="hidden">
+
+<div class="box">
+<h2>Добавить донатера</h2>
+<input id="name" placeholder="Имя">
+<select id="level">
+<option value="обычный">Обычный</option>
+<option value="vip">VIP</option>
+</select>
+<button onclick="addDonater()">Добавить</button>
+</div>
+
+<div class="box">
+<h2>Фильтр</h2>
+<select id="monthFilter" onchange="render()">
+<option value="all">Все</option>
+<option value="1">Январь</option>
+<option value="2">Февраль</option>
+<option value="3">Март</option>
+<option value="4">Апрель</option>
+<option value="5">Май</option>
+<option value="6">Июнь</option>
+<option value="7">Июль</option>
+<option value="8">Август</option>
+<option value="9">Сентябрь</option>
+<option value="10">Октябрь</option>
+<option value="11">Ноябрь</option>
+<option value="12">Декабрь</option>
+</select>
+</div>
+
+<div id="list"></div>
+
+</div>
 </div>
 
 <script>
 const SUPABASE_URL = "https://ltrglnjbsyoelkagqbbh.supabase.co";
 const SUPABASE_KEY = "sb_publishable_zYB0aPTJt0yvF_dnejRENQ_jvBSNMQ4";
-
-const REDIRECT_URL = "https://riderly.github.io/donater-crm/";
-
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const authBox = document.getElementById("auth");
-const appBox = document.getElementById("app");
+let user = null;
+let donaters = [];
 
-async function login() {
-  const email = document.getElementById("email").value;
-
-  const { error } = await supabase.auth.signInWithOtp({
-    email,
-    options: {
-      emailRedirectTo: REDIRECT_URL
-    }
-  });
-
-  document.getElementById("authStatus").innerText =
-    error ? error.message : "Проверь почту ✉️";
+async function register(){
+const email = emailInput().value;
+const password = passInput().value;
+const { error } = await supabase.auth.signUp({email,password});
+status(error, "Аккаунт создан");
 }
 
-async function logout() {
-  await supabase.auth.signOut();
-  location.reload();
+async function login(){
+const email = emailInput().value;
+const password = passInput().value;
+const { error } = await supabase.auth.signInWithPassword({email,password});
+status(error, "Вошла");
 }
 
-async function loadData(user) {
-  const { data } = await supabase
-    .from("donaters")
-    .select("data")
-    .eq("user_id", user.id)
-    .single();
+function emailInput(){return document.getElementById('email');}
+function passInput(){return document.getElementById('password');}
+function status(err,msg){document.getElementById('authStatus').innerText = err?err.message:msg;}
 
-  if (data) {
-    document.getElementById("data").value = JSON.stringify(data.data, null, 2);
-  }
+async function load(){
+const { data } = await supabase.from('donaters').select('data').eq('user_id', user.id).single();
+if(data?.data) donaters = data.data;
+render();
 }
 
-async function saveData() {
-  const user = (await supabase.auth.getUser()).data.user;
-  const json = JSON.parse(document.getElementById("data").value || "{}");
-
-  await supabase
-    .from("donaters")
-    .upsert({
-      user_id: user.id,
-      data: json
-    });
-
-  alert("Сохранено 💾");
+async function save(){
+await supabase.from('donaters').upsert({user_id:user.id,data:donaters});
 }
 
-supabase.auth.onAuthStateChange(async (event, session) => {
-  if (session?.user) {
-    authBox.classList.add("hidden");
-    appBox.classList.remove("hidden");
-    loadData(session.user);
-  }
+function addDonater(){
+const name = document.getElementById('name').value;
+const level = document.getElementById('level').value;
+if(!name) return;
+
+donaters.push({name, level, total:0, history:[]});
+save();
+render();
+}
+
+function addMoney(i, amount){
+const month = new Date().getMonth()+1;
+donaters[i].total += amount;
+donaters[i].history.push({amount, month});
+save();
+render();
+}
+
+function render(){
+const list = document.getElementById('list');
+list.innerHTML = '';
+
+const filter = document.getElementById('monthFilter').value;
+
+let sorted = [...donaters].map((d,i)=>({...d,index:i}));
+
+sorted.forEach(d=>{
+if(filter !== 'all'){
+d.total = d.history
+.filter(h=>h.month == filter)
+.reduce((a,b)=>a+b.amount,0);
+}
 });
 
-async function init() {
-  const { data } = await supabase.auth.getSession();
+sorted.sort((a,b)=>b.total-a.total);
 
-  if (data.session?.user) {
-    authBox.classList.add("hidden");
-    appBox.classList.remove("hidden");
-    loadData(data.session.user);
-  }
+sorted.forEach((d,rank)=>{
+const el = document.createElement('div');
+el.className = 'card ' + (rank===0?'top':'');
+
+el.innerHTML = `
+<b>${d.name}</b> (${d.level})<br>
+Сумма: ${d.total}
+<br>
+<button onclick="addMoney(${d.index},10)">+10</button>
+<button onclick="addMoney(${d.index},30)">+30</button>
+<button onclick="addMoney(${d.index},50)">+50</button>
+<button onclick="addMoney(${d.index},100)">+100</button>
+`;
+
+list.appendChild(el);
+});
 }
 
-init();
+supabase.auth.onAuthStateChange((event,session)=>{
+if(session?.user){
+user=session.user;
+document.getElementById('auth').classList.add('hidden');
+document.getElementById('app').classList.remove('hidden');
+load();
+}
+});
+
+(async ()=>{
+const { data } = await supabase.auth.getSession();
+if(data.session?.user){
+user=data.session.user;
+document.getElementById('auth').classList.add('hidden');
+document.getElementById('app').classList.remove('hidden');
+load();
+}
+})();
 </script>
 
 </body>
