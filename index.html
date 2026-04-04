@@ -181,14 +181,24 @@ function renderTable() {
             <td>${curMonth}€</td>
             <td><strong style="color:var(--primary)">${d.total}€</strong></td>
             <td style="font-size:12px; color:#666">${getNextTarget(d.total)}</td>
-            <td style="text-align:right">
-                <button class="secondary" style="padding:6px 12px" onclick="quickAdd('${d.id}', 10)">+10</button>
-                <button class="secondary" style="padding:6px 12px" onclick="openPanel('${d.id}')">✎</button>
+            <td style="text-align:right; display:flex; gap:5px; justify-content:flex-end; align-items:center;">
+                <button class="secondary" style="padding:6px 10px" onclick="quickAdd('${d.id}', 10)">+10</button>
+                <button class="secondary" style="padding:6px 10px" onclick="quickAdd('${d.id}', 30)">+30</button>
+                <button class="secondary" style="padding:6px 10px" onclick="quickAdd('${d.id}', 50)">+50</button>
+                <button class="secondary" style="padding:6px 10px" onclick="quickAdd('${d.id}', 100)">+100</button>
+                
+                <div style="display:flex; gap:2px; background:var(--input); padding:2px; border-radius:6px; margin-left:5px; border:1px solid #2a2a3f;">
+                    <input type="number" id="custom_${d.id}" placeholder="€" style="width:55px; margin:0; padding:5px; background:transparent; border:none; font-size:12px; text-align:center;">
+                    <button onclick="addCustomMoney('${d.id}')" style="background:#333; padding:2px 8px; border-radius:4px; font-size:12px; width:auto;">+</button>
+                </div>
+
+                <button class="secondary" style="padding:6px 12px; margin-left:10px" onclick="openPanel('${d.id}')">✎</button>
             </td>
         `;
         tbody.appendChild(tr);
     });
 }
+
 
 // --- ACTIONS ---
 async function addDonator() {
@@ -301,6 +311,21 @@ function getNextTarget(t) {
 
 function showLoading(show) { document.getElementById('loading').style.display = show ? 'block' : 'none'; }
 function closePanel() { document.getElementById('panel').classList.remove('open'); }
+// Функция для добавления произвольной суммы (например, 37)
+function addCustomMoney(id) {
+    const input = document.getElementById(`custom_${id}`);
+    const val = parseFloat(input.value);
+    
+    if (val > 0) {
+        quickAdd(id, val); // Вызываем уже готовую функцию добавления
+        input.value = '';  // Очищаем поле после нажатия
+    } else {
+        alert("Введите число больше 0");
+    }
+}
+
 </script>
 </body>
 </html>
+
+
