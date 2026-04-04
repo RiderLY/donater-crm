@@ -3,76 +3,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stellar CRM 2.0</title>
+    <title>Stellar CRM PRO</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { --primary: #7c3aed; --bg: #0f0f14; --card: #181825; --input: #232336; --text: #eee; }
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
-        body { background: var(--bg); color: var(--text); }
+        :root { --primary: #7c3aed; --bg: #0f0f14; --card: #181825; --input: #232336; --text: #eee; --danger: #ef4444; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', system-ui, sans-serif; }
+        body { background: var(--bg); color: var(--text); overflow-x: hidden; }
         
-        /* Auth & Layout */
         .flex-center { height: 100vh; display: flex; justify-content: center; align-items: center; }
-        .box { background: var(--card); padding: 30px; border-radius: 16px; width: 340px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .box { background: var(--card); padding: 30px; border-radius: 16px; width: 340px; border: 1px solid #2a2a3f; }
         
-        input, select { width: 100%; padding: 12px; margin-bottom: 12px; border-radius: 8px; border: 1px solid transparent; background: var(--input); color: white; transition: 0.2s; }
+        input { width: 100%; padding: 12px; margin-bottom: 12px; border-radius: 8px; border: 1px solid #2a2a3f; background: var(--input); color: white; }
         input:focus { border-color: var(--primary); outline: none; }
-        button { width: 100%; padding: 12px; background: var(--primary); border: none; border-radius: 8px; color: white; cursor: pointer; font-weight: 600; }
-        button:hover { opacity: 0.9; }
-        button:disabled { background: #444; cursor: not-allowed; }
-
-        .app { display: none; padding: 30px; max-width: 1200px; margin: 0 auto; }
-        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         
-        /* Таблица */
-        .table-container { background: var(--card); border-radius: 12px; overflow: hidden; }
-        table { width: 100%; border-collapse: collapse; }
-        th { text-align: left; padding: 15px; background: rgba(255,255,255,0.05); color: #aaa; font-size: 13px; text-transform: uppercase; }
-        td { padding: 15px; border-bottom: 1px solid #2a2a3f; }
-        tr:hover { background: rgba(255,255,255,0.02); }
+        button { padding: 12px 20px; background: var(--primary); border: none; border-radius: 8px; color: white; cursor: pointer; font-weight: 600; transition: 0.2s; }
+        button:hover { filter: brightness(1.1); }
+        button.secondary { background: #2a2a3f; }
+        button.danger { background: var(--danger); }
 
-        /* Панель */
-        .panel { position: fixed; right: -400px; top: 0; width: 380px; height: 100%; background: #111; padding: 25px; transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: -10px 0 30px rgba(0,0,0,0.5); z-index: 1000; overflow-y: auto; }
+        #app { display: none; padding: 40px; max-width: 1300px; margin: 0 auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        
+        .table-container { background: var(--card); border-radius: 12px; border: 1px solid #2a2a3f; }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 15px; color: #666; font-size: 12px; letter-spacing: 1px; border-bottom: 1px solid #2a2a3f; }
+        td { padding: 15px; border-bottom: 1px solid #232336; }
+
+        .panel { position: fixed; right: -450px; top: 0; width: 400px; height: 100%; background: #0a0a0f; padding: 30px; transition: 0.4s; z-index: 1000; border-left: 1px solid #2a2a3f; overflow-y: auto; }
         .panel.open { right: 0; }
-        .history-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 15px; }
-        .history-item { background: var(--input); padding: 8px; border-radius: 6px; }
+        
+        .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 2px; background: var(--primary); display: none; }
     </style>
 </head>
 <body>
 
-<div id="auth" class="flex-center">
+<div id="loading" class="loading-overlay"></div>
+
+<div id="auth-screen" class="flex-center">
     <div class="box">
-        <h2 id="authTitle" style="margin-bottom: 20px; text-align: center;">Stellar CRM</h2>
+        <h2 style="margin-bottom:20px; text-align:center">Stellar PRO</h2>
         <input id="email" type="email" placeholder="Email">
-        <input id="password" type="password" placeholder="Пароль">
-        <button id="authBtn" onclick="handleAuth()">Войти</button>
-        <p onclick="toggleMode()" style="text-align:center; margin-top:15px; font-size:13px; color:#aaa; cursor:pointer;">Сменить режим (Вход/Регистрация)</p>
+        <input id="pass" type="password" placeholder="Пароль">
+        <button id="authBtn" style="width:100%" onclick="handleAuth()">Продолжить</button>
+        <p id="toggleText" onclick="toggleAuth()" style="text-align:center; margin-top:15px; font-size:12px; color:#666; cursor:pointer">Нет аккаунта? Создать</p>
     </div>
 </div>
 
-<div id="app" class="app">
-    <header>
-        <h2>Дашборд донатов</h2>
-        <button onclick="logout()" style="width: auto; padding: 8px 16px; background: #333;">Выйти</button>
-    </header>
-
-    <div style="display: grid; grid-template-columns: 1fr 300px; gap: 15px; margin-bottom: 20px;">
-        <input id="search" placeholder="Поиск по имени..." oninput="loadData()" style="margin:0">
-        <div style="display: flex; gap: 8px;">
-            <input id="newName" placeholder="Новый донатер" style="margin:0">
-            <button onclick="addDonator()" style="width: auto;">+</button>
+<div id="app">
+    <div class="header">
+        <h1>Dashboard</h1>
+        <div style="display:flex; gap:10px; align-items:center">
+            <span id="userLabel" style="font-size:13px; color:#666"></span>
+            <button class="secondary" onclick="logout()">Выйти</button>
         </div>
+    </div>
+
+    <div style="display:flex; gap:15px; margin-bottom:25px">
+        <input id="search" placeholder="Поиск по базе..." style="margin:0" oninput="renderTable()">
+        <input id="newName" placeholder="Имя нового участника" style="margin:0; width:250px">
+        <button onclick="addDonator()">Добавить</button>
     </div>
 
     <div class="table-container">
         <table>
             <thead>
                 <tr>
-                    <th>Уровень</th>
-                    <th>Имя</th>
-                    <th>Месяц</th>
-                    <th>Всего</th>
-                    <th>Цель</th>
-                    <th style="text-align: right;">Действия</th>
+                    <th>VIP Уровень</th>
+                    <th>Участник</th>
+                    <th>В этом месяце</th>
+                    <th>Всего донатов</th>
+                    <th>До цели</th>
+                    <th style="text-align:right">Управление</th>
                 </tr>
             </thead>
             <tbody id="tbody"></tbody>
@@ -81,22 +82,25 @@
 </div>
 
 <div id="panel" class="panel">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:25px">
         <h3 id="pName">Редактирование</h3>
-        <button onclick="closePanel()" style="width:auto; background:none; font-size:24px;">&times;</button>
-    </div>
-    
-    <label>Имя</label><input id="eName">
-    <label>Никнейм</label><input id="eNick">
-    <label>Telegram</label><input id="eTG">
-    
-    <div style="margin-top:20px;">
-        <label>История (выберите год):</label>
-        <select id="yearSelect" onchange="renderHistoryInputs()"></select>
-        <div id="historyGrid" class="history-grid"></div>
+        <button onclick="closePanel()" class="secondary" style="padding:5px 10px">&times;</button>
     </div>
 
-    <button onclick="saveData()" style="margin-top: 30px;">Сохранить изменения</button>
+    <label style="color:#666; font-size:12px">Имя профиля</label>
+    <input id="eName" type="text">
+    
+    <label style="color:#666; font-size:12px">Telegram / Контакт</label>
+    <input id="eTG" type="text">
+
+    <div style="margin-top:20px">
+        <label>История по годам:</label>
+        <select id="yearSelect" onchange="renderHistoryFields()" style="background:var(--input); color:white; padding:10px; width:100%; border-radius:8px; margin-top:5px"></select>
+        <div id="historyFields" style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:15px"></div>
+    </div>
+
+    <button onclick="saveData()" style="width:100%; margin-top:30px">Сохранить изменения</button>
+    <button onclick="deleteCurrent()" class="danger" style="width:100%; margin-top:10px; background:transparent; color:#666">Удалить донатера</button>
 </div>
 
 <script>
@@ -104,161 +108,199 @@ const SUPABASE_URL = "https://ltrglnjbsyoelkagqbbh.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx0cmdsbmpic3lvZWxrYWdxYmJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUxNzgyNDksImV4cCI6MjA5MDc1NDI0OX0.VhZiD9OVDfv3nlfYysBNXPsax4RkevErwWImMlqW9BM";
 const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-let isLogin = true, currentId = null, currentUser = null, currentData = null;
-const MONTHS_LIST = ["Янв","Фев","Мар","Апр","Май","Июн","Июл","Авг","Сен","Окт","Ноя","Дек"];
-const getMonthKey = () => { const d = new Date(); return `${MONTHS_LIST[d.getMonth()]} ${d.getFullYear()}`; };
+let state = {
+    user: null,
+    donators: [],
+    isLogin: true,
+    currentEditId: null
+};
 
-// AUTH LOGIC
+const MONTHS = ["Янв","Фев","Мар","Апр","Май","Июн","Июл","Авг","Сен","Окт","Ноя","Дек"];
+const getCurKey = () => `${MONTHS[new Date().getMonth()]} ${new Date().getFullYear()}`;
+
+// --- AUTH SYSTEM ---
+function toggleAuth() {
+    state.isLogin = !state.isLogin;
+    document.getElementById('authTitle').innerText = state.isLogin ? "Вход" : "Регистрация";
+    document.getElementById('toggleText').innerText = state.isLogin ? "Нет аккаунта? Создать" : "Уже есть аккаунт? Войти";
+}
+
 async function handleAuth() {
-    const email = document.getElementById("email").value, password = document.getElementById("password").value;
-    const btn = document.getElementById("authBtn");
-    btn.disabled = true; btn.innerText = "Загрузка...";
-
-    const { data, error } = isLogin 
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('pass').value;
+    showLoading(true);
+    
+    const { data, error } = state.isLogin 
         ? await db.auth.signInWithPassword({ email, password })
         : await db.auth.signUp({ email, password });
 
-    if (error) { alert(error.message); btn.disabled = false; btn.innerText = "Ошибка"; }
-    else { checkUser(); }
+    if (error) alert(error.message);
+    showLoading(false);
 }
 
-async function checkUser() {
-    const { data: { user } } = await db.auth.getUser();
-    if (user) {
-        currentUser = user;
-        document.getElementById("auth").style.display = "none";
-        document.getElementById("app").style.display = "block";
-        loadData();
+// Слушатель сессии (Авто-логин)
+db.auth.onAuthStateChange((event, session) => {
+    if (session) {
+        state.user = session.user;
+        document.getElementById('auth-screen').style.display = 'none';
+        document.getElementById('app').style.display = 'block';
+        document.getElementById('userLabel').innerText = state.user.email;
+        initData();
+    } else {
+        document.getElementById('auth-screen').style.display = 'flex';
+        document.getElementById('app').style.display = 'none';
     }
-}
-function toggleMode() { isLogin = !isLogin; document.getElementById("authTitle").innerText = isLogin ? "Вход" : "Регистрация"; }
-function logout() { db.auth.signOut().then(() => location.reload()); }
-checkUser();
+});
 
-// CORE LOGIC
-function getVIP(total) {
-    const t = total || 0;
-    if(t >= 6000) return "10 (Supreme)";
-    if(t >= 4000) return "9 (Mythic)";
-    if(t >= 2500) return "8 (Legend)";
-    if(t >= 1500) return "7 (Royal)";
-    if(t >= 1000) return "6 (Elite)";
-    if(t >= 750) return "5 (Diamond)";
-    if(t >= 500) return "4 (Platinum)";
-    if(t >= 300) return "3 (Gold)";
-    if(t >= 150) return "2 (Silver)";
-    return t >= 50 ? "1 (Старт)" : "0";
+function logout() { db.auth.signOut(); }
+
+// --- DATA ENGINE ---
+async function initData() {
+    showLoading(true);
+    const { data, error } = await db.from('donators').select('*').eq('user_id', state.user.id);
+    if (!error) state.donators = data;
+    renderTable();
+    showLoading(false);
 }
 
-function getNextTarget(total) {
-    const t = total || 0;
-    const levels = [50, 150, 300, 500, 750, 1000, 1500, 2500, 4000, 6000];
-    const next = levels.find(l => l > t);
-    return next ? (next - t) + "€" : "MAX";
-}
+function renderTable() {
+    const q = document.getElementById('search').value.toLowerCase();
+    const tbody = document.getElementById('tbody');
+    tbody.innerHTML = '';
 
-async function loadData() {
-    const q = document.getElementById("search").value.toLowerCase();
-    // ФИЛЬТР ПО USER_ID (Та самая защита!)
-    const { data, error } = await db.from("donators").select("*").eq("user_id", currentUser.id);
-    
-    if (error) return console.error(error);
-    const tbody = document.getElementById("tbody");
-    tbody.innerHTML = "";
+    const filtered = state.donators
+        .filter(d => d.name.toLowerCase().includes(q))
+        .sort((a,b) => b.total - a.total);
 
-    data.filter(d => d.name.toLowerCase().includes(q)).sort((a,b) => b.total - a.total).forEach(d => {
-        const curM = (d.history || {})[getMonthKey()] || 0;
-        const tr = document.createElement("tr");
+    filtered.forEach(d => {
+        const curMonth = (d.history || {})[getCurKey()] || 0;
+        const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td><b>${getVIP(d.total)}</b></td>
+            <td><span style="background:rgba(124,58,237,0.1); color:#a78bfa; padding:4px 8px; border-radius:4px; font-size:12px; font-weight:bold">${getVIP(d.total)}</span></td>
             <td>${d.name}</td>
-            <td>${curM}€</td>
-            <td>${d.total}€</td>
-            <td style="color:#888">${getNextTarget(d.total)}</td>
+            <td>${curMonth}€</td>
+            <td><strong style="color:var(--primary)">${d.total}€</strong></td>
+            <td style="font-size:12px; color:#666">${getNextTarget(d.total)}</td>
             <td style="text-align:right">
-                <button onclick="quickAdd('${d.id}', 10)" style="width:auto; padding:5px 10px; margin-right:5px">+10</button>
-                <button onclick="openPanel('${d.id}')" style="width:auto; padding:5px 10px; background:#444">✎</button>
+                <button class="secondary" style="padding:6px 12px" onclick="quickAdd('${d.id}', 10)">+10</button>
+                <button class="secondary" style="padding:6px 12px" onclick="openPanel('${d.id}')">✎</button>
             </td>
         `;
         tbody.appendChild(tr);
     });
 }
 
+// --- ACTIONS ---
 async function addDonator() {
-    const name = document.getElementById("newName").value;
-    if(!name) return;
-    await db.from("donators").insert([{ name, total:0, history:{}, user_id: currentUser.id }]);
-    document.getElementById("newName").value = "";
-    loadData();
+    const name = document.getElementById('newName').value;
+    if (!name) return;
+    showLoading(true);
+    const newEntry = { name, total: 0, history: {}, user_id: state.user.id };
+    const { data, error } = await db.from('donators').insert([newEntry]).select();
+    if (!error) {
+        state.donators.push(data[0]);
+        document.getElementById('newName').value = '';
+        renderTable();
+    }
+    showLoading(false);
 }
 
-async function quickAdd(id, amt) {
-    const { data } = await db.from("donators").select("*").eq("id", id).single();
-    let hist = data.history || {}, key = getMonthKey();
-    hist[key] = (hist[key] || 0) + amt;
-    await db.from("donators").update({ history: hist, total: (data.total + amt) }).eq("id", id);
-    loadData();
+async function quickAdd(id, amount) {
+    const idx = state.donators.findIndex(d => d.id === id);
+    if (idx === -1) return;
+
+    let d = state.donators[idx];
+    let key = getCurKey();
+    d.history = d.history || {};
+    d.history[key] = (d.history[key] || 0) + amount;
+    d.total += amount;
+
+    // Оптимистичное обновление UI
+    renderTable();
+
+    // Фоновое обновление базы
+    await db.from('donators').update({ history: d.history, total: d.total }).eq('id', id);
 }
 
-// PANEL LOGIC
+// --- PANEL LOGIC ---
 function openPanel(id) {
-    currentId = id;
-    db.from("donators").select("*").eq("id", id).single().then(({data}) => {
-        currentData = data;
-        document.getElementById("pName").innerText = data.name;
-        document.getElementById("eName").value = data.name;
-        document.getElementById("eNick").value = data.nick || "";
-        document.getElementById("eTG").value = data.telegram || "";
-        
-        const ys = document.getElementById("yearSelect");
-        ys.innerHTML = [2024, 2025, 2026, 2027].map(y => `<option value="${y}">${y}</option>`).join("");
-        ys.value = new Date().getFullYear();
-        
-        renderHistoryInputs();
-        document.getElementById("panel").classList.add("open");
-    });
+    state.currentEditId = id;
+    const d = state.donators.find(x => x.id === id);
+    document.getElementById('pName').innerText = d.name;
+    document.getElementById('eName').value = d.name;
+    document.getElementById('eTG').value = d.telegram || '';
+
+    const ys = document.getElementById('yearSelect');
+    ys.innerHTML = [2024, 2025, 2026, 2027].map(y => `<option value="${y}">${y}</option>`).join('');
+    ys.value = new Date().getFullYear();
+    
+    renderHistoryFields();
+    document.getElementById('panel').classList.add('open');
 }
 
-function renderHistoryInputs() {
-    const year = document.getElementById("yearSelect").value;
-    const grid = document.getElementById("historyGrid");
-    grid.innerHTML = MONTHS_LIST.map(m => {
+function renderHistoryFields() {
+    const d = state.donators.find(x => x.id === state.currentEditId);
+    const year = document.getElementById('yearSelect').value;
+    const container = document.getElementById('historyFields');
+    container.innerHTML = MONTHS.map(m => {
         const key = `${m} ${year}`;
-        const val = (currentData.history || {})[key] || 0;
-        return `<div class="history-item">
-            <span style="font-size:11px; color:#aaa">${m}</span>
-            <input type="number" class="h-input" data-key="${key}" value="${val}" style="margin:0; padding:5px; font-size:12px;">
-        </div>`;
-    }).join("");
+        const val = (d.history || {})[key] || 0;
+        return `
+            <div style="background:var(--input); padding:8px; border-radius:6px">
+                <div style="font-size:10px; color:#666; margin-bottom:4px">${m}</div>
+                <input type="number" step="0.01" min="0" class="h-input" data-key="${key}" value="${val}" style="margin:0; padding:4px; font-size:12px; border:none">
+            </div>
+        `;
+    }).join('');
 }
 
 async function saveData() {
-    const hInputs = document.querySelectorAll(".h-input");
-    let newHist = currentData.history || {}, newTot = 0;
+    showLoading(true);
+    const d = state.donators.find(x => x.id === state.currentEditId);
+    const inputs = document.querySelectorAll('.h-input');
     
-    // Обновляем текущий год из инпутов
-    hInputs.forEach(i => {
-        const v = parseFloat(i.value) || 0;
-        if(v > 0) newHist[i.dataset.key] = v;
-        else delete newHist[i.dataset.key];
+    inputs.forEach(i => {
+        const val = Math.max(0, parseFloat(i.value) || 0); // ВАЛИДАЦИЯ: Запрет отрицательных
+        if (val > 0) d.history[i.dataset.key] = val;
+        else delete d.history[i.dataset.key];
     });
 
-    // Пересчитываем ВСЁ (Защита от битых данных)
-    newTot = Object.values(newHist).reduce((acc, curr) => acc + curr, 0);
+    d.name = document.getElementById('eName').value;
+    d.telegram = document.getElementById('eTG').value;
+    d.total = Object.values(d.history).reduce((a, b) => a + b, 0);
 
-    await db.from("donators").update({
-        name: document.getElementById("eName").value,
-        nick: document.getElementById("eNick").value,
-        telegram: document.getElementById("eTG").value,
-        history: newHist,
-        total: newTot
-    }).eq("id", currentId);
-
+    await db.from('donators').update(d).eq('id', d.id);
     closePanel();
-    loadData();
+    renderTable();
+    showLoading(false);
 }
 
-function closePanel() { document.getElementById("panel").classList.remove("open"); }
+async function deleteCurrent() {
+    if (!confirm("Удалить донатера навсегда?")) return;
+    showLoading(true);
+    await db.from('donators').delete().eq('id', state.currentEditId);
+    state.donators = state.donators.filter(x => x.id !== state.currentEditId);
+    closePanel();
+    renderTable();
+    showLoading(false);
+}
+
+// --- UTILS ---
+function getVIP(t) {
+    if(t>=6000) return "SUPREME"; if(t>=4000) return "MYTHIC"; if(t>=2500) return "LEGEND";
+    if(t>=1500) return "ROYAL"; if(t>=1000) return "ELITE"; if(t>=750) return "DIAMOND";
+    if(t>=500) return "PLATINUM"; if(t>=300) return "GOLD"; if(t>=150) return "SILVER";
+    return t>=50 ? "START" : "NEW";
+}
+
+function getNextTarget(t) {
+    const goals = [50, 150, 300, 500, 750, 1000, 1500, 2500, 4000, 6000];
+    const next = goals.find(g => g > t);
+    return next ? `+${(next - t).toFixed(0)}€ до VIP` : "MAX LEVEL";
+}
+
+function showLoading(show) { document.getElementById('loading').style.display = show ? 'block' : 'none'; }
+function closePanel() { document.getElementById('panel').classList.remove('open'); }
 </script>
 </body>
 </html>
