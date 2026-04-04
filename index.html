@@ -3,73 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Donators CRM</title>
-
+    <title>Donators CRM PRO</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
         body { background: #0f0f14; color: white; }
 
         /* AUTH */
         .auth-container { height: 100vh; display: none; justify-content: center; align-items: center; }
-        .auth-box { background: #181825; padding: 30px; border-radius: 16px; width: 320px; }
-        .auth-box h2 { margin-bottom: 20px; }
-        input { width: 100%; padding: 10px; margin-bottom: 12px; border-radius: 8px; border: none; background: #232336; color: white; }
+        .auth-box { background: #181825; padding: 30px; border-radius: 16px; width: 320px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        input { width: 100%; padding: 12px; margin-bottom: 12px; border-radius: 8px; border: 1px solid #2a2a3f; background: #232336; color: white; }
         
-        button { width: 100%; padding: 10px; background: #7c3aed; border: none; border-radius: 8px; color: white; cursor: pointer; transition: 0.2s; }
-        button:hover { opacity: 0.8; }
+        button { padding: 10px 20px; background: #7c3aed; border: none; border-radius: 8px; color: white; cursor: pointer; transition: 0.3s; font-weight: 600; }
+        button:hover { background: #6d28d9; transform: translateY(-1px); }
+        .btn-add { background: #10b981; margin-right: 10px; }
+        .btn-add:hover { background: #059669; }
         
-        .toggle { margin-top: 10px; text-align: center; cursor: pointer; color: #aaa; font-size: 14px; }
+        .toggle { margin-top: 15px; text-align: center; cursor: pointer; color: #aaa; font-size: 14px; }
 
         /* APP */
-        .app { display: none; padding: 20px; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .logout { width: auto; padding: 8px 16px; background: #3f3f46; }
+        .app { display: none; padding: 30px; max-width: 1200px; margin: 0 auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 1px solid #2a2a3f; padding-bottom: 20px; }
+        .header-btns { display: flex; gap: 10px; }
+        .logout { background: #3f3f46; }
 
         /* TABLE */
-        .table-container { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; background: #181825; border-radius: 12px; overflow: hidden; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #2a2a3f; }
-        th { background: #1f1f2e; color: #aaa; font-weight: 500; }
-        tr:hover { background: #22223a; }
+        .table-container { background: #181825; border-radius: 12px; overflow: hidden; border: 1px solid #2a2a3f; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 16px; text-align: left; border-bottom: 1px solid #2a2a3f; }
+        th { background: #1f1f2e; color: #94a3b8; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover { background: rgba(124, 58, 237, 0.05); }
 
-        .vip { color: #a78bfa; font-weight: bold; }
-        .open-btn { padding: 6px 10px; font-size: 12px; width: auto; }
-        a { color: #7c3aed; text-decoration: none; }
-        a:hover { text-decoration: underline; }
+        .vip { color: #a78bfa; font-weight: 800; font-size: 12px; background: rgba(167, 139, 250, 0.1); padding: 4px 8px; border-radius: 4px; }
+        .open-btn { padding: 6px 12px; font-size: 12px; background: #2d2d3f; }
+        a { color: #a78bfa; text-decoration: none; font-size: 14px; }
     </style>
 </head>
 <body>
 
 <div class="auth-container" id="auth">
     <div class="auth-box">
-        <h2 id="authTitle">Вход</h2>
+        <h2 id="authTitle" style="margin-bottom: 20px;">Вход</h2>
         <input type="email" id="email" placeholder="Email">
         <input type="password" id="password" placeholder="Пароль">
-        <button onclick="handleAuth()">Продолжить</button>
+        <button style="width: 100%" onclick="handleAuth()">Войти</button>
         <div class="toggle" onclick="toggleMode()" id="toggleBtn">Нет аккаунта? Регистрация</div>
     </div>
 </div>
 
 <div class="app" id="app">
     <div class="header">
-        <h2>Donators CRM</h2>
-        <button class="logout" onclick="logout()">Выйти</button>
+        <div>
+            <h1 style="font-size: 24px;">Donators CRM</h1>
+            <p style="color: #64748b; font-size: 14px;">Управление базой спонсоров</p>
+        </div>
+        <div class="header-btns">
+            <button class="btn-add" onclick="addDonator()">+ Донатер</button>
+            <button class="logout" onclick="logout()">Выйти</button>
+        </div>
     </div>
 
     <div class="table-container">
         <table>
             <thead>
                 <tr>
-                    <th>VIP</th>
+                    <th>Уровень</th>
                     <th>Имя</th>
-                    <th>Месяц (€)</th>
-                    <th>Всего (€)</th>
-                    <th>Telegram</th>
-                    <th>TikTok</th>
-                    <th>ДР</th>
-                    <th>Косплей</th>
+                    <th>Месяц</th>
+                    <th>Всего</th>
+                    <th>Контакты</th>
                     <th>Действие</th>
                 </tr>
             </thead>
@@ -79,86 +82,69 @@
 </div>
 
 <script>
-// 🔑 ВСТАВЬ СВОИ ДАННЫЕ
 const SUPABASE_URL = "YOUR_URL";
 const SUPABASE_ANON_KEY = "YOUR_KEY";
-
 const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 let isLogin = true;
 
 // ================= AUTH =================
-
 function toggleMode() {
     isLogin = !isLogin;
     document.getElementById("authTitle").innerText = isLogin ? "Вход" : "Регистрация";
-    document.getElementById("toggleBtn").innerText = isLogin 
-        ? "Нет аккаунта? Регистрация" 
-        : "Уже есть аккаунт? Вход";
+    document.getElementById("toggleBtn").innerText = isLogin ? "Нет аккаунта? Регистрация" : "Уже есть аккаунт? Вход";
 }
 
 async function handleAuth() {
     const email = document.getElementById("email").value;
     const password = document.getElementById("password").value;
-
     if (!email || !password) return alert("Заполни поля");
 
     try {
-        if (isLogin) {
-            const { error } = await db.auth.signInWithPassword({ email, password });
-            if (error) throw error;
-        } else {
-            const { error } = await db.auth.signUp({ email, password });
-            if (error) throw error;
-            alert("Проверь почту для подтверждения (если включено в Supabase)");
-        }
+        const { error } = isLogin 
+            ? await db.auth.signInWithPassword({ email, password })
+            : await db.auth.signUp({ email, password });
+        if (error) throw error;
         checkUser();
-    } catch (err) {
-        alert(err.message);
-    }
+    } catch (err) { alert(err.message); }
 }
 
-async function logout() {
-    await db.auth.signOut();
-    checkUser();
-}
+async function logout() { await db.auth.signOut(); checkUser(); }
 
 async function checkUser() {
     const { data: { user } } = await db.auth.getUser();
-
-    if (user) {
-        document.getElementById("auth").style.display = "none";
-        document.getElementById("app").style.display = "block";
-        loadDonators();
-    } else {
-        document.getElementById("auth").style.display = "flex";
-        document.getElementById("app").style.display = "none";
-    }
+    document.getElementById("auth").style.display = user ? "none" : "flex";
+    document.getElementById("app").style.display = user ? "block" : "none";
+    if (user) loadDonators();
 }
 
-// Запускаем проверку при загрузке
 checkUser();
 
-// ================= DATA LOGIC =================
-
+// ================= CORE LOGIC =================
 function getVIP(total) {
     const levels = [50, 150, 300, 500, 750, 1000, 1500, 2500, 4000, 6000];
     let vip = 0;
-    for (let i = 0; i < levels.length; i++) {
-        if (total >= levels[i]) vip = i + 1;
-    }
+    levels.forEach((lvl, i) => { if (total >= lvl) vip = i + 1; });
     return vip;
 }
 
-async function loadDonators() {
-    const { data, error } = await db
-        .from("donators")
-        .select("*");
+async function addDonator() {
+    const name = prompt("Введите имя донатера:");
+    if (!name) return;
 
-    if (error) {
-        console.error("Ошибка загрузки:", error.message);
-        return;
-    }
+    const { error } = await db.from("donators").insert([{
+        name: name,
+        total: 0,
+        month: 0
+    }]);
+
+    if (error) return alert("Ошибка: " + error.message);
+    loadDonators();
+}
+
+async function loadDonators() {
+    const { data, error } = await db.from("donators").select("*");
+    if (error) return console.error(error);
     renderTable(data);
 }
 
@@ -166,36 +152,25 @@ function renderTable(data) {
     const tbody = document.getElementById("tableBody");
     tbody.innerHTML = "";
 
-    // Сортировка: сначала VIP уровень, затем общая сумма
-    data.sort((a, b) => {
-        const vipA = getVIP(a.total || 0);
-        const vipB = getVIP(b.total || 0);
-        if (vipB !== vipA) return vipB - vipA;
-        return (b.total || 0) - (a.total || 0);
-    });
+    data.sort((a, b) => (b.total || 0) - (a.total || 0));
 
     data.forEach(d => {
         const tr = document.createElement("tr");
         tr.innerHTML = `
-            <td class="vip">VIP ${getVIP(d.total || 0)}</td>
-            <td>${d.name || "-"}</td>
+            <td><span class="vip">VIP ${getVIP(d.total || 0)}</span></td>
+            <td style="font-weight: 500;">${d.name || "Аноним"}</td>
             <td>${d.month || 0} €</td>
-            <td>${d.total || 0} €</td>
-            <td>${d.telegram ? `<a href="${d.telegram}" target="_blank">Telegram</a>` : "-"}</td>
-            <td>${d.tiktok ? `<a href="${d.tiktok}" target="_blank">TikTok</a>` : "-"}</td>
-            <td>${d.birthday || "-"}</td>
-            <td>${d.cosplay || "-"}</td>
-            <td><button class="open-btn" onclick="openDetails('${d.id}')">Открыть</button></td>
+            <td style="color: #10b981; font-weight: 600;">${d.total || 0} €</td>
+            <td>
+                ${d.telegram ? `<a href="${d.telegram}" target="_blank">TG</a>` : ""}
+                ${d.tiktok ? `<a href="${d.tiktok}" style="margin-left:8px" target="_blank">TT</a>` : ""}
+                ${!d.telegram && !d.tiktok ? "-" : ""}
+            </td>
+            <td><button class="open-btn" onclick="alert('ID: ${d.id}')">Открыть</button></td>
         `;
         tbody.appendChild(tr);
     });
 }
-
-function openDetails(id) {
-    alert("Открытие карточки донатера с ID: " + id + "\n(Здесь можно добавить модальное окно)");
-}
-
 </script>
-
 </body>
 </html>
