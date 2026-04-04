@@ -4,362 +4,205 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Stellar CRM</title>
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:system-ui;}
 body{background:#0f0f14;color:white;}
-
 .auth-container{height:100vh;display:flex;justify-content:center;align-items:center;}
 .auth-box{background:#181825;padding:30px;border-radius:16px;width:320px;}
-
 input{width:100%;padding:10px;margin-bottom:10px;border-radius:8px;border:none;background:#232336;color:white;}
 button{padding:10px;background:#7c3aed;border:none;border-radius:8px;color:white;cursor:pointer;}
-.btn-secondary {background:#44445c; margin-top: 10px;}
-
 .app{display:none;padding:20px;}
-
 table{width:100%;border-collapse:collapse;background:#181825;}
 td,th{padding:10px;border-bottom:1px solid #2a2a3f;}
-
-.panel{position:fixed;right:-400px;top:0;width:320px;height:100%;background:#111;padding:20px;transition:.3s; z-index: 100;}
+.panel{position:fixed;right:-400px;top:0;width:350px;height:100%;background:#111;padding:20px;transition:.3s;z-index:100;overflow-y:auto;}
+.history-item{display:flex;justify-content:space-between;align-items:center;background:#1a1a26;padding:5px;border-radius:5px;margin-bottom:5px;}
 </style>
 </head>
-
 <body>
 
 <div class="auth-container" id="auth">
-<div class="auth-box">
-<h2 id="authTitle" style="margin-bottom: 15px;">Вход</h2>
-
-<input id="email" placeholder="Email" type="email">
-<input id="password" placeholder="Пароль" type="password">
-
-<button onclick="handleAuth()" style="width: 100%;">Продолжить</button>
-
-<div onclick="toggleMode()" style="margin-top:15px;cursor:pointer;color:#aaa;text-align:center;font-size: 14px;">
-Переключить на регистрацию
-</div>
-</div>
+    <div class="auth-box">
+        <h2 id="authTitle" style="margin-bottom:15px;">Вход</h2>
+        <input id="email" placeholder="Email">
+        <input id="password" type="password" placeholder="Пароль">
+        <button onclick="handleAuth()" style="width:100%">Продолжить</button>
+        <div onclick="toggleMode()" style="margin-top:15px;cursor:pointer;color:#aaa;text-align:center;">Переключить режим</div>
+    </div>
 </div>
 
 <div class="app" id="app">
-
-<div style="display:flex;gap:10px;margin-bottom:15px;">
-<input id="search" placeholder="Поиск или имя для добавления..." oninput="loadData()" style="margin-bottom: 0;">
-<button onclick="addDonator()">+ Добавить</button>
-<button onclick="logout()" class="btn-secondary" style="margin-top: 0;">Выход</button>
-</div>
-
-<table>
-<thead>
-<tr>
-<th style="text-align: left;">VIP</th>
-<th style="text-align: left;">Имя</th>
-<th style="text-align: left;">Месяц</th>
-<th style="text-align: left;">Всего</th>
-<th style="text-align: left;">Осталось до VIP</th>
-<th></th>
-</tr>
-</thead>
-<tbody id="tbody"></tbody>
-</table>
-
+    <div style="display:flex;gap:10px;margin-bottom:15px;">
+        <input id="search" placeholder="Поиск или имя для добавления..." oninput="loadData()" style="margin-bottom:0;">
+        <button onclick="addDonator()">+ Добавить</button>
+        <button onclick="logout()" style="background:#444">Выход</button>
+    </div>
+    <table>
+        <thead>
+            <tr>
+                <th style="text-align:left">VIP</th>
+                <th style="text-align:left">Имя</th>
+                <th style="text-align:left">Месяц</th>
+                <th style="text-align:left">Всего</th>
+                <th style="text-align:left">Осталось до VIP</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+    </table>
 </div>
 
 <div class="panel" id="panel">
-<h3 id="pName" style="margin-bottom: 15px;"></h3>
+    <h3 id="pName" style="margin-bottom:15px;">Данные</h3>
+    <label style="font-size:12px;color:#aaa">Имя</label><input id="eName">
+    <label style="font-size:12px;color:#aaa">Никнейм</label><input id="eNick">
+    <label style="font-size:12px;color:#aaa">Telegram</label><input id="eTG">
+    <label style="font-size:12px;color:#aaa">TikTok</label><input id="eTT">
+    <label style="font-size:12px;color:#aaa">Дата рождения</label><input id="eBD" type="date">
 
-<label style="font-size: 12px; color: #aaa;">Имя</label>
-<input id="eName">
+    <div style="margin-top:20px;border-top:1px solid #333;padding-top:10px;">
+        <h4>История по месяцам</h4>
+        <div id="historyList" style="margin-top:10px;"></div>
+    </div>
 
-<label style="font-size: 12px; color: #aaa;">Никнейм</label>
-<input id="eNick">
-
-<label style="font-size: 12px; color: #aaa;">Telegram</label>
-<input id="eTG">
-
-<label style="font-size: 12px; color: #aaa;">TikTok</label>
-<input id="eTT">
-
-<label style="font-size: 12px; color: #aaa;">Дата рождения</label>
-<input id="eBD" type="date">
-
-<button onclick="saveData()" style="width: 100%; margin-top: 10px;">Сохранить</button>
-<button onclick="closePanel()" class="btn-secondary" style="width: 100%;">Закрыть</button>
+    <button onclick="saveData()" style="width:100%;margin-top:15px;">Сохранить всё</button>
+    <button onclick="closePanel()" style="width:100%;margin-top:10px;background:#444">Закрыть</button>
 </div>
 
 <script>
 const SUPABASE_URL = "https://ltrglnjbsyoelkagqbbh.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx0cmdsbmpic3lvZWxrYWdxYmJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUxNzgyNDksImV4cCI6MjA5MDc1NDI0OX0.VhZiD9OVDfv3nlfYysBNXPsax4RkevErwWImMlqW9BM";
-
 const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-let isLogin = true;
-let currentId = null;
+let isLogin = true, currentId = null;
+const MONTHS_LIST = ["Янв","Фев","Мар","Апр","Май","Июн","Июл","Авг","Сен","Окт","Ноя","Дек"];
+const getMonth = () => { const d = new Date(); return `${MONTHS_LIST[d.getMonth()]} ${d.getFullYear()}`; };
 
-const MONTHS = ["Янв","Фев","Мар","Апр","Май","Июн","Июл","Авг","Сен","Окт","Ноя","Дек"];
-const getMonth = () => MONTHS[new Date().getMonth()];
-
-// Надежно получаем элементы интерфейса
-const elAuth = document.getElementById("auth");
-const elApp = document.getElementById("app");
-const elAuthTitle = document.getElementById("authTitle");
-const elSearch = document.getElementById("search");
-const elTbody = document.getElementById("tbody");
-const elPanel = document.getElementById("panel");
-const elPName = document.getElementById("pName");
-const elEName = document.getElementById("eName");
-const elENick = document.getElementById("eNick");
-const elETG = document.getElementById("eTG");
-const elETT = document.getElementById("eTT");
-const elEBD = document.getElementById("eBD");
-
-// AUTH
-
-function toggleMode(){
-  isLogin = !isLogin;
-  elAuthTitle.innerText = isLogin ? "Вход" : "Регистрация";
-  document.querySelector(".auth-box div[onclick]").innerText = isLogin ? "Переключить на регистрацию" : "Уже есть аккаунт? Войти";
-}
-
-async function handleAuth(){
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
-
-  if(!email || !password) return alert("Введите email и пароль");
-
-  if(isLogin){
-    const {error} = await db.auth.signInWithPassword({email, password});
-    if(error) return alert("Ошибка входа: " + error.message);
-  } else {
-    const {error} = await db.auth.signUp({email, password});
-    if(error) return alert("Ошибка регистрации: " + error.message);
-    alert("Успешно! Проверь почту для подтверждения или попробуй войти.");
-  }
-
-  checkUser();
-}
-
-async function checkUser(){
-  const {data:{user}, error} = await db.auth.getUser();
-
-  if(user){
-    elAuth.style.display = "none";
-    elApp.style.display = "block";
-    loadData();
-  }
-}
-checkUser();
-
-function logout(){
-  db.auth.signOut().then(() => location.reload());
-}
-
-// DATA
-
-// DATA
-
+// VIP System
 function getVIP(total){
-  if(total >= 6000) return "10 (Supreme)";
-  if(total >= 4000) return "9 (Mythic)";
-  if(total >= 2500) return "8 (Legend)";
-  if(total >= 1500) return "7 (Royal)";
-  if(total >= 1000) return "6 (Elite)";
-  if(total >= 750) return "5 (Diamond)";
-  if(total >= 500) return "4 (Platinum)";
-  if(total >= 300) return "3 (Gold)";
-  if(total >= 150) return "2 (Silver)";
-  if(total >= 50) return "1 (Старт)";
-  return "0";
+    if(total >= 6000) return "10 (Supreme)";
+    if(total >= 4000) return "9 (Mythic)";
+    if(total >= 2500) return "8 (Legend)";
+    if(total >= 1500) return "7 (Royal)";
+    if(total >= 1000) return "6 (Elite)";
+    if(total >= 750) return "5 (Diamond)";
+    if(total >= 500) return "4 (Platinum)";
+    if(total >= 300) return "3 (Gold)";
+    if(total >= 150) return "2 (Silver)";
+    if(total >= 50) return "1 (Старт)";
+    return "0";
 }
 
 function getNextLevelTarget(total){
-  const t = total || 0;
-  if(t >= 6000) return "Максимум";
-  if(t >= 4000) return (6000 - t) + " €";
-  if(t >= 2500) return (4000 - t) + " €";
-  if(t >= 1500) return (2500 - t) + " €";
-  if(t >= 1000) return (1500 - t) + " €";
-  if(t >= 750) return (1000 - t) + " €";
-  if(t >= 500) return (750 - t) + " €";
-  if(t >= 300) return (500 - t) + " €";
-  if(t >= 150) return (300 - t) + " €";
-  if(t >= 50) return (150 - t) + " €";
-  return (50 - t) + " €";
+    const t = total || 0;
+    const thresholds = [50, 150, 300, 500, 750, 1000, 1500, 2500, 4000, 6000];
+    const next = thresholds.find(v => v > t);
+    return next ? (next - t) + " €" : "Максимум";
 }
 
+// Auth
+async function handleAuth(){
+    const email = document.getElementById("email").value, password = document.getElementById("password").value;
+    const {error} = isLogin ? await db.auth.signInWithPassword({email, password}) : await db.auth.signUp({email, password});
+    if(error) alert(error.message); else checkUser();
+}
+async function checkUser(){
+    const {data:{user}} = await db.auth.getUser();
+    if(user){ document.getElementById("auth").style.display="none"; document.getElementById("app").style.display="block"; loadData(); }
+}
+function toggleMode(){ isLogin=!isLogin; document.getElementById("authTitle").innerText = isLogin ? "Вход" : "Регистрация"; }
+function logout(){ db.auth.signOut().then(()=>location.reload()); }
+checkUser();
 
+// Data
 async function loadData(){
-  const q = elSearch.value.toLowerCase();
-
-  const {data, error} = await db.from("donators").select("*");
-  
-  if (error) {
-    console.error("Ошибка загрузки данных:", error);
-    return;
-  }
-
-  elTbody.innerHTML = "";
-
-  // Защита: если data пустая, используем пустой массив
-  const safeData = data || [];
-
-  safeData
-  .filter(d => !q || d.name?.toLowerCase().includes(q))
-  .sort((a,b) => (b.total || 0) - (a.total || 0))
-  .forEach(d => {
-    const month = (d.history || {})[getMonth()] || 0;
-    const tr = document.createElement("tr");
-
-    tr.innerHTML = `
-      <td>VIP ${getVIP(d.total||0)}</td>
-      <td>${d.name||""}</td>
-      <td>${month}€</td>
-      <td>${d.total||0}€</td>
-<td style="color: #aaa;">${getNextLevelTarget(d.total||0)}</td>
-      <td style="text-align: right; display: flex; justify-content: flex-end; gap: 8px; align-items: center;">
-        <button onclick="addMoney('${d.id}', 10)">+10</button>
-        <button onclick="addMoney('${d.id}', 30)">+30</button>
-        <button onclick="addMoney('${d.id}', 50)">+50</button>
-        <button onclick="addMoney('${d.id}', 100)">+100</button>
-        
-        <div style="display: flex; gap: 4px; margin-left: 10px; background: #232336; padding: 2px; border-radius: 8px;">
-          <input type="number" id="custom_${d.id}" placeholder="Сумма" style="width: 70px; margin-bottom: 0; padding: 8px; background: transparent; text-align: center;">
-          <button onclick="addCustomMoney('${d.id}')" style="background: #44445c; padding: 8px 12px;">+</button>
-        </div>
-
-        <button onclick="openPanel('${d.id}')" style="margin-left: 10px;">✎</button>
-        <button onclick="deleteDonator('${d.id}')" style="background:#e11d48;">✕</button>
-      </td>
-
-
-    `;
-    elTbody.appendChild(tr);
-  });
+    const q = document.getElementById("search").value.toLowerCase();
+    const {data} = await db.from("donators").select("*");
+    const tbody = document.getElementById("tbody");
+    tbody.innerHTML = "";
+    (data || []).filter(d => !q || d.name?.toLowerCase().includes(q)).sort((a,b) => (b.total||0)-(a.total||0)).forEach(d => {
+        const monthVal = (d.history || {})[getMonth()] || 0;
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td>VIP ${getVIP(d.total||0)}</td>
+            <td>${d.name||""}</td>
+            <td>${monthVal}€</td>
+            <td>${d.total||0}€</td>
+            <td style="color:#aaa">${getNextLevelTarget(d.total||0)}</td>
+            <td style="display:flex;gap:5px;justify-content:flex-end;align-items:center;">
+                <button onclick="addMoney('${d.id}', 10)">+10</button>
+                <button onclick="addMoney('${d.id}', 30)">+30</button>
+                <button onclick="addMoney('${d.id}', 100)">+100</button>
+                <div style="display:flex;gap:2px;background:#232336;padding:2px;border-radius:5px;margin-left:5px;">
+                    <input type="number" id="custom_${d.id}" placeholder="€" style="width:50px;margin:0;padding:5px;background:transparent;font-size:12px;">
+                    <button onclick="addCustomMoney('${d.id}')" style="background:#444;padding:5px">+</button>
+                </div>
+                <button onclick="openPanel('${d.id}')" style="margin-left:10px">✎</button>
+                <button onclick="deleteDonator('${d.id}')" style="background:#e11d48">✕</button>
+            </td>`;
+        tbody.appendChild(tr);
+    });
 }
-
-// ADD
 
 async function addDonator(){
-  const name = elSearch.value;
-  if(!name) {
-    alert("Введите имя в поле поиска для добавления");
-    return;
-  }
-
-  const {data:{user}} = await db.auth.getUser();
-  if(!user) return alert("Необходима авторизация");
-
-  const {error} = await db.from("donators").insert([{
-    name,
-    total: 0,
-    history: {},
-    user_id: user.id
-  }]);
-
-  if (error) {
-    alert("Ошибка добавления: " + error.message);
-    return;
-  }
-
-  elSearch.value = "";
-  loadData();
+    const name = document.getElementById("search").value; if(!name) return;
+    const {data:{user}} = await db.auth.getUser();
+    await db.from("donators").insert([{ name, total:0, history:{}, user_id:user.id }]);
+    document.getElementById("search").value=""; loadData();
 }
 
-// PANEL
-
 async function openPanel(id){
-  currentId = id;
-  const {data, error} = await db.from("donators").select("*").eq("id", id).single();
-
-  if(error || !data) {
-    alert("Не удалось загрузить данные пользователя");
-    return;
-  }
-
-  elPName.innerText = data.name || "Без имени";
-  elEName.value = data.name || "";
-  elENick.value = data.nick || "";
-  elETG.value = data.telegram || "";
-  elETT.value = data.tiktok || "";
-  elEBD.value = data.birthday || "";
-
-  elPanel.style.right = "0";
+    currentId = id;
+    const {data} = await db.from("donators").select("*").eq("id", id).single();
+    document.getElementById("pName").innerText = data.name;
+    document.getElementById("eName").value = data.name || "";
+    document.getElementById("eNick").value = data.nick || "";
+    document.getElementById("eTG").value = data.telegram || "";
+    document.getElementById("eTT").value = data.tiktok || "";
+    document.getElementById("eBD").value = data.birthday || "";
+    
+    const hList = document.getElementById("historyList");
+    hList.innerHTML = "";
+    const years = [2024, 2025, 2026];
+    years.forEach(y => {
+        MONTHS_LIST.forEach(m => {
+            const key = `${m} ${y}`, val = (data.history || {})[key] || 0;
+            const div = document.createElement("div"); div.className="history-item";
+            div.innerHTML = `<span style="font-size:12px;color:#aaa">${key}</span><input type="number" class="h-in" data-key="${key}" value="${val}" style="width:70px;margin:0;padding:3px;font-size:12px;">`;
+            hList.appendChild(div);
+        });
+    });
+    document.getElementById("panel").style.right = "0";
 }
 
 async function saveData(){
-  const {error} = await db.from("donators").update({
-    name: elEName.value,
-    nick: elENick.value,
-    telegram: elETG.value,
-    tiktok: elETT.value,
-    birthday: elEBD.value
-  }).eq("id", currentId);
-
-  if (error) {
-    alert("Ошибка сохранения: " + error.message);
-    return;
-  }
-
-  elPanel.style.right = "-400px";
-  loadData();
+    const hInputs = document.querySelectorAll(".h-in");
+    let hist = {}, tot = 0;
+    hInputs.forEach(i => { const v = parseFloat(i.value)||0; if(v>0) hist[i.dataset.key]=v; tot+=v; });
+    await db.from("donators").update({
+        name: document.getElementById("eName").value, nick: document.getElementById("eNick").value,
+        telegram: document.getElementById("eTG").value, tiktok: document.getElementById("eTT").value,
+        birthday: document.getElementById("eBD").value, history: hist, total: tot
+    }).eq("id", currentId);
+    closePanel(); loadData();
 }
 
-function closePanel() {
-  elPanel.style.right = "-400px";
-}
+function closePanel(){ document.getElementById("panel").style.right = "-400px"; }
 
-// MONEY
-// CUSTOM MONEY
-function addCustomMoney(id) {
-  const input = document.getElementById(`custom_${id}`);
-  const amount = parseFloat(input.value); 
-
-  if (!amount || amount <= 0) {
-    alert("Введите правильную сумму");
-    return;
-  }
-
-  addMoney(id, amount); 
-}
-
-async function addMoney(id, amount){
-  const {data, error: fetchError} = await db.from("donators").select("*").eq("id", id).single();
-  if (fetchError || !data) return alert("Ошибка поиска пользователя");
-
-  const month = getMonth();
-  const history = data.history || {};
-
-  history[month] = (history[month] || 0) + amount;
-
-  const {error: updateError} = await db.from("donators").update({
-    total: (data.total || 0) + amount,
-    history
-  }).eq("id", id);
-
-  if (updateError) return alert("Ошибка пополнения");
-
-  loadData();
-}
-
-async function deleteDonator(id){
-  alert("Сигнал дошел! Пытаюсь удалить ID: " + id); // <-- наш маячок
-
-  const {error} = await db.from("donators").delete().eq("id", id);
-  
-  if (error) {
-    alert("Ошибка базы данных: " + error.message);
-  } else {
+async function addMoney(id, amt){
+    const {data} = await db.from("donators").select("*").eq("id", id).single();
+    let hist = data.history || {}, curM = getMonth();
+    hist[curM] = (hist[curM] || 0) + amt;
+    await db.from("donators").update({ total: (data.total || 0) + amt, history: hist }).eq("id", id);
     loadData();
-  }
 }
 
+function addCustomMoney(id){
+    const val = parseFloat(document.getElementById(`custom_${id}`).value);
+    if(val > 0) addMoney(id, val);
+}
 
+async function deleteDonator(id){ if(confirm("Удалить?")) { await db.from("donators").delete().eq("id", id); loadData(); } }
 </script>
-
 </body>
 </html>
-
-
