@@ -3,233 +3,221 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<script type="module">
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-
-window.supabase = createClient(
-  "https://ltrglnjbsyoelkagqbbh.supabase.co",
-  "sb_publishable_zYB0aPTJt0yvF_dnejRENQ_jvBSNMQ4"
-)
-</script>
-
-<title>Donater CRM Cloud</title>
+<title>Donater CRM</title>
 
 <style>
-/* твой стиль без изменений */
-:root {
-  --bg: #0d0b14;
-  --card: #171327;
-  --accent: #8b5cf6;
-  --text: #fff;
+:root{
+  --bg:#0d0b14;
+  --card:#171327;
+  --accent:#7c3aed;
+  --text:#fff;
 }
 
-body {
-  margin: 0;
-  font-family: sans-serif;
-  background: var(--bg);
-  color: var(--text);
-}
+body{margin:0;font-family:sans-serif;background:var(--bg);color:var(--text)}
+.container{padding:20px}
+.hidden{display:none}
+button{background:var(--accent);border:none;color:#fff;padding:6px 10px;border-radius:6px;cursor:pointer}
+input,textarea{width:100%;background:#111;border:1px solid #333;color:#fff;padding:6px;border-radius:6px}
 
-.hidden { display:none; }
+/* table */
+table{width:100%;border-collapse:collapse}
+th,td{padding:10px;border-bottom:1px solid #222}
+tr:hover{background:#1f1a33}
 
-.container { padding:20px; }
+/* panel */
+.panel{position:fixed;top:0;right:-420px;width:420px;height:100%;background:var(--card);transition:.3s;padding:20px;overflow:auto}
+.panel.open{right:0}
 
-button {
-  background: var(--accent);
-  border:none;
-  padding:8px;
-  color:white;
-  border-radius:6px;
-  cursor:pointer;
-}
-
-input { width:100%; padding:8px; margin:5px 0; }
+.month-row{display:flex;gap:5px;margin-bottom:6px;padding:4px;border-radius:6px;align-items:center}
+.month-row.active{background:#2b1f5e}
+.month-row.has{background:#1f1a33}
+.month-row.zero{opacity:.5}
 </style>
 </head>
 
 <body>
 
-<!-- AUTH -->
 <div id="auth" class="container">
-  <h2 id="modeTitle">Вход</h2>
-  <input id="email" placeholder="Email">
-  <input id="password" type="password" placeholder="Пароль">
-  <button id="mainBtn">Войти</button>
-  <button onclick="toggleMode()">Регистрация / Вход</button>
-  <p id="status"></p>
+<h2 id="modeTitle">Вход</h2>
+<input id="email" placeholder="Email">
+<input id="password" type="password" placeholder="Пароль">
+<button id="mainBtn">Войти</button>
+<button onclick="toggleMode()">Регистрация</button>
+<p id="status"></p>
 </div>
 
-<!-- APP -->
 <div id="app" class="hidden">
-
 <div class="container">
-  <h1>Donaters</h1>
-  <button onclick="addUser()">+ Добавить</button>
+<h1>Donaters</h1>
+<button onclick="logout()">Выйти</button>
+<button onclick="addUser()">+ Добавить</button>
 
-  <table>
-    <thead>
-      <tr>
-        <th>VIP</th>
-        <th>Ник</th>
-        <th>Месяц €</th>
-        <th>Всего €</th>
-        <th>TG</th>
-        <th>TikTok</th>
-        <th>Open</th>
-      </tr>
-    </thead>
-    <tbody id="table"></tbody>
-  </table>
+<table>
+<thead>
+<tr>
+<th>VIP</th>
+<th>Ник</th>
+<th>Месяц €</th>
+<th>Всего €</th>
+<th>TG</th>
+<th>TikTok</th>
+<th>Open</th>
+</tr>
+</thead>
+<tbody id="table"></tbody>
+</table>
 </div>
 
 <div id="panel" class="panel"></div>
-
 </div>
 
-<script type="module">
+<script>
+// ===== AUTH (через Supabase REST без SDK) =====
+const SUPABASE_URL = "https://ltrglnjbsyoelkagqbbh.supabase.co";
+const API_KEY = "sb_publishable_zYB0aPTJt0yvF_dnejRENQ_jvBSNMQ4";
 
-const supabase = window.supabase;
+let session = JSON.parse(localStorage.getItem("session"));
 
-let user = null;
-let data = [];
+async function authRequest(type,email,password){
+  const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`,{
+    method:"POST",
+    headers:{
+      "Content-Type":"application/json",
+      "apikey":API_KEY
+    },
+    body:JSON.stringify({email,password})
+  });
+
+  if(!res.ok) throw new Error("Ошибка авторизации");
+  return res.json();
+}
 
 let isLogin = true;
 
-const emailEl = document.getElementById("email");
-const passEl = document.getElementById("password");
-const statusEl = document.getElementById("status");
-const btn = document.getElementById("mainBtn");
-const title = document.getElementById("modeTitle");
-
-window.toggleMode = () => {
+function toggleMode(){
   isLogin = !isLogin;
-  title.innerText = isLogin ? "Вход" : "Регистрация";
-  btn.innerText = isLogin ? "Войти" : "Создать аккаунт";
-};
+  modeTitle.innerText = isLogin?"Вход":"Регистрация";
+  mainBtn.innerText = isLogin?"Войти":"Создать аккаунт";
+}
 
-btn.onclick = async () => {
-  const email = emailEl.value.trim();
-  const password = passEl.value.trim();
+mainBtn.onclick = async ()=>{
+  try{
+    const email = email.value.trim();
+    const password = password.value.trim();
 
-  if(!email || !password){
-    statusEl.innerText = "Заполни всё";
-    return;
+    const data = await authRequest(isLogin?"login":"register",email,password);
+    localStorage.setItem("session",JSON.stringify(data));
+    startApp();
+  }catch(e){
+    status.innerText = e.message;
   }
-
-  let res;
-
-  if(isLogin){
-    res = await supabase.auth.signInWithPassword({ email, password });
-  } else {
-    res = await supabase.auth.signUp({ email, password });
-    if(!res.error){
-      res = await supabase.auth.signInWithPassword({ email, password });
-    }
-  }
-
-  if(res.error){
-    statusEl.innerText = res.error.message;
-    return;
-  }
-
-  successLogin(res.data.user);
-};
-
-function successLogin(u){
-  user = u;
-  document.getElementById("auth").classList.add("hidden");
-  document.getElementById("app").classList.remove("hidden");
-  loadFromCloud();
 }
 
-async function loadFromCloud(){
-  const { data: d } = await supabase
-    .from("donaters")
-    .select("data")
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  data = d?.data || [];
-  render();
+function logout(){
+  localStorage.removeItem("session");
+  location.reload();
 }
 
-async function saveToCloud(){
-  await supabase.from("donaters").upsert({
-    user_id: user.id,
-    data
-  });
+// ===== DATA =====
+const VIP = [50,150,300,500,750,1000,1500,2500,4000,6000];
+const months = ["Янв","Фев","Мар","Апр","Май","Июн","Июл","Авг","Сен","Окт","Ноя","Дек"];
+
+let data = JSON.parse(localStorage.getItem("donaters")||"[]");
+
+function save(){
+  localStorage.setItem("donaters",JSON.stringify(data));
 }
 
-const VIP_LEVELS = [50,150,300,500,750,1000,1500,2500,4000,6000];
+function total(u){return u.months.reduce((a,b)=>a+Number(b||0),0)}
 
-function calcTotal(u){
-  return u.months.reduce((a,b)=>a+Number(b||0),0);
-}
-
-function calcVIP(total){
+function vip(t){
   let lvl=0;
-  VIP_LEVELS.forEach((v,i)=>{ if(total>=v) lvl=i+1 });
+  VIP.forEach((v,i)=>{if(t>=v)lvl=i+1});
   return lvl;
+}
+
+function nextVip(t){
+  for(let v of VIP){if(t<v)return v-t}
+  return 0;
 }
 
 function render(){
   data.forEach(u=>{
-    u.total = calcTotal(u);
-    u.vip = calcVIP(u.total);
+    u.total=total(u);
+    u.vip=vip(u.total);
   });
 
-  data.sort((a,b)=> b.vip - a.vip || b.total - a.total);
+  data.sort((a,b)=>b.vip-a.vip||b.total-a.total);
 
-  const tbody = document.getElementById("table");
-  tbody.innerHTML = "";
-
-  const currentMonth = new Date().getMonth();
+  table.innerHTML="";
+  const m=new Date().getMonth();
 
   data.forEach((u,i)=>{
-    const tr = document.createElement("tr");
-
-    tr.innerHTML = `
-      <td>VIP ${u.vip}</td>
-      <td>${u.nick || ""}</td>
-      <td>${u.months[currentMonth] || 0}</td>
-      <td>${u.total}</td>
-      <td>${u.telegram || ""}</td>
-      <td>${u.tiktok || ""}</td>
-      <td><button onclick="openUser(${i})">Open</button></td>
+    const tr=document.createElement("tr");
+    tr.innerHTML=`
+    <td>VIP ${u.vip}</td>
+    <td>${u.nick||""}</td>
+    <td>${u.months[m]||0}</td>
+    <td>${u.total}</td>
+    <td>${u.telegram||""}</td>
+    <td>${u.tiktok||""}</td>
+    <td><button onclick="openUser(${i})">Open</button></td>
     `;
-
-    tbody.appendChild(tr);
+    table.appendChild(tr);
   });
 
-  saveToCloud();
+  save();
 }
 
-window.addUser = () => {
-  data.push({
-    name:"",
-    nick:"",
-    telegram:"",
-    tiktok:"",
-    birthday:"",
-    cosplay:"",
-    notes:"",
-    months:Array(12).fill(0)
-  });
+function addUser(){
+  data.push({nick:"",telegram:"",tiktok:"",birthday:"",cosplay:"",notes:"",months:Array(12).fill(0)});
   render();
-};
+}
 
-window.openUser = (i)=>{
-  alert("панель оставил как у тебя, если хочешь — верну полностью");
-};
+function openUser(i){
+  const u=data[i];
+  panel.classList.add("open");
 
-(async ()=>{
-  const { data } = await supabase.auth.getSession();
-  if(data.session?.user){
-    successLogin(data.session.user);
-  }
-})();
+  panel.innerHTML=`
+  <h2>${u.nick||"User"}</h2>
 
+  <input placeholder="Ник" value="${u.nick}" onchange="upd(${i},'nick',this.value)">
+  <input placeholder="Telegram" value="${u.telegram}" onchange="upd(${i},'telegram',this.value)">
+  <input placeholder="TikTok" value="${u.tiktok}" onchange="upd(${i},'tiktok',this.value)">
+  <textarea placeholder="Заметки" onchange="upd(${i},'notes',this.value)">${u.notes}</textarea>
+
+  ${months.map((m,mi)=>{
+    const val=u.months[mi];
+    return `
+    <div class="month-row ${mi===new Date().getMonth()?'active':''} ${val>0?'has':'zero'}">
+      <span>${m}</span>
+      <input type="number" value="${val}" onchange="setM(${i},${mi},this.value)">
+      <button onclick="addM(${i},${mi},10)">+10</button>
+      <button onclick="addM(${i},${mi},30)">+30</button>
+      <button onclick="addM(${i},${mi},50)">+50</button>
+      <button onclick="addM(${i},${mi},100)">+100</button>
+    </div>`;
+  }).join("")}
+
+  <p>Всего: ${u.total}</p>
+  <p>VIP: ${u.vip}</p>
+  <p>До следующего: ${nextVip(u.total)}</p>
+
+  <button onclick="panel.classList.remove('open')">Закрыть</button>
+  `;
+}
+
+function upd(i,k,v){data[i][k]=v;render()}
+function setM(i,m,v){data[i].months[m]=Number(v);render();openUser(i)}
+function addM(i,m,a){data[i].months[m]+=a;render();openUser(i)}
+
+function startApp(){
+  auth.classList.add("hidden");
+  app.classList.remove("hidden");
+  render();
+}
+
+if(session) startApp();
 </script>
 
 </body>
