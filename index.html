@@ -298,7 +298,13 @@ if (error || !data) {
 async function deleteDonator(id) {
     if (!confirm("Удалить донатера?")) return;
 
-    await db.from("donators").delete().eq("id", id);
+    const res = await db
+        .from("donators")
+        .delete()
+        .eq("id", id);
+
+    console.log("DELETE RESULT:", res);
+
     loadData();
 }
 
