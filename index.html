@@ -4,104 +4,165 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Stellar CRM</title>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-:root { --primary:#7c3aed; --bg:#0b0b0f; --card:#16161e; --text:#ececed; --border:#2a2a3f; --green:#10b981;}
-*{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',sans-serif;}
-body{background:var(--bg);color:var(--text);display:flex;justify-content:center;align-items:center;min-height:100vh;}
+*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui;}
+body{background:#0f0f14;color:white;}
 
-#auth-screen{width:380px;background:var(--card);padding:40px;border-radius:24px;border:1px solid var(--border);}
-#app{display:none;width:100%;max-width:1200px;padding:40px;}
+.auth-container{height:100vh;display:flex;justify-content:center;align-items:center;}
+.auth-box{background:#181825;padding:30px;border-radius:16px;width:320px;}
 
-input{width:100%;margin-bottom:15px;padding:12px;border-radius:12px;background:#111;border:1px solid var(--border);color:white;}
-button{padding:12px;border:none;border-radius:12px;cursor:pointer;font-weight:700;}
-.btn{background:var(--primary);color:white;}
+input{width:100%;padding:10px;margin-bottom:10px;border-radius:8px;border:none;background:#232336;color:white;}
+button{padding:10px;background:#7c3aed;border:none;border-radius:8px;color:white;cursor:pointer;}
 
-.table-box{background:var(--card);border-radius:20px;overflow:hidden;}
-table{width:100%;border-collapse:collapse;}
-td,th{padding:14px;border-bottom:1px solid var(--border);}
+.app{display:none;padding:20px;}
+
+table{width:100%;border-collapse:collapse;background:#181825;}
+td,th{padding:10px;border-bottom:1px solid #2a2a3f;}
+
+.panel{position:fixed;right:-400px;top:0;width:320px;height:100%;background:#111;padding:20px;transition:.3s;}
 </style>
 </head>
 
 <body>
 
-<div id="auth-screen">
-<h2>STELLAR CRM</h2>
-<input id="email" placeholder="Email">
-<input id="pass" type="password" placeholder="Пароль">
-<input id="invite-code" placeholder="Код">
-<button class="btn" onclick="handleAuth()">Войти</button>
+<!-- AUTH -->
+<div class="auth-container" id="auth">
+<div class="auth-box">
+<h2 id="authTitle">Вход</h2>
+
+<input id="email">
+<input id="password" type="password">
+
+<button onclick="handleAuth()">Продолжить</button>
+
+<div onclick="toggleMode()" style="margin-top:10px;cursor:pointer;color:#aaa;">
+Переключить режим
+</div>
+</div>
 </div>
 
-<div id="app">
-<input id="search" placeholder="Поиск..." oninput="loadData()">
+<!-- APP -->
+<div class="app" id="app">
+
+<div style="display:flex;gap:10px;margin-bottom:10px;">
+<input id="search" placeholder="Имя..." oninput="loadData()">
 <button onclick="addDonator()">+ Добавить</button>
 <button onclick="logout()">Выход</button>
+</div>
 
-<div class="table-box">
 <table>
+<thead>
+<tr>
+<th>VIP</th>
+<th>Имя</th>
+<th>Месяц</th>
+<th>Всего</th>
+<th></th>
+</tr>
+</thead>
 <tbody id="tbody"></tbody>
 </table>
-</div>
+
 </div>
 
-<div id="panel" style="position:fixed;right:-400px;top:0;width:300px;height:100%;background:#111;padding:20px;">
+<!-- PANEL -->
+<div class="panel" id="panel">
 <h3 id="pName"></h3>
+
 <input id="eName">
 <input id="eNick">
 <input id="eTG">
 <input id="eTT">
 <input id="eBD" type="date">
+
 <button onclick="saveData()">Сохранить</button>
 </div>
 
 <script>
 const SUPABASE_URL = "https://ltrglnjbsyoelkagqbbh.supabase.co";
-const SUPABASE_KEY = "ТВОЙ_KEY";
+const SUPABASE_KEY = "ТВОЙ_КЛЮЧ";
 
 const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-const MONTHS = ["Янв","Фев","Мар","Апр","Май","Июн","Июл","Авг","Сен","Окт","Ноя","Дек"];
 
+let isLogin = true;
 let currentId = null;
 
-const getCurMonth = () => MONTHS[new Date().getMonth()];
+const MONTHS = ["Янв","Фев","Мар","Апр","Май","Июн","Июл","Авг","Сен","Окт","Ноя","Дек"];
+const getMonth = () => MONTHS[new Date().getMonth()];
+
+// AUTH
+
+function toggleMode(){
+  isLogin=!isLogin;
+  authTitle.innerText = isLogin ? "Вход" : "Регистрация";
+}
 
 async function handleAuth(){
-  const email = emailInput.value;
-  const password = pass.value;
-  await db.auth.signInWithPassword({email,password});
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+
+  if(isLogin){
+    const {error} = await db.auth.signInWithPassword({email,password});
+    if(error) return alert(error.message);
+  }else{
+    const {error} = await db.auth.signUp({email,password});
+    if(error) return alert(error.message);
+    alert("Проверь почту");
+  }
+
   checkUser();
 }
 
 async function checkUser(){
   const {data:{user}} = await db.auth.getUser();
+
   if(user){
-    authScreen.style.display="none";
+    auth.style.display="none";
     app.style.display="block";
     loadData();
   }
 }
 checkUser();
 
+function logout(){
+  db.auth.signOut().then(()=>location.reload());
+}
+
+// DATA
+
+function getVIP(total){
+  if(total>=1000) return 5;
+  if(total>=500) return 4;
+  if(total>=250) return 3;
+  if(total>=100) return 2;
+  if(total>=50) return 1;
+  return 0;
+}
+
 async function loadData(){
   const q = search.value.toLowerCase();
 
   const {data} = await db.from("donators").select("*");
-  if(!data) return;
 
   const tbody = document.getElementById("tbody");
   tbody.innerHTML="";
 
-  data.filter(d=>!q || d.name?.toLowerCase().includes(q))
+  data
+  .filter(d=>!q || d.name?.toLowerCase().includes(q))
+  .sort((a,b)=>(b.total||0)-(a.total||0))
   .forEach(d=>{
-    const tr = document.createElement("tr");
 
-    const monthVal = (d.history||{})[getCurMonth()]||0;
+    const month = (d.history||{})[getMonth()]||0;
+
+    const tr=document.createElement("tr");
 
     tr.innerHTML=`
-      <td>${d.name}</td>
-      <td>${monthVal}€</td>
+      <td>VIP ${getVIP(d.total||0)}</td>
+      <td>${d.name||""}</td>
+      <td>${month}€</td>
       <td>${d.total||0}€</td>
       <td>
         <button onclick="addMoney('${d.id}',50)">+50</button>
@@ -109,9 +170,12 @@ async function loadData(){
         <button onclick="deleteDonator('${d.id}')">✕</button>
       </td>
     `;
+
     tbody.appendChild(tr);
   });
 }
+
+// ADD
 
 async function addDonator(){
   const name = search.value;
@@ -126,20 +190,23 @@ async function addDonator(){
     user_id:user.id
   }]);
 
+  search.value="";
   loadData();
 }
 
+// PANEL
+
 async function openPanel(id){
-  currentId = id;
+  currentId=id;
 
   const {data} = await db.from("donators").select("*").eq("id",id).single();
 
-  pName.innerText = data.name;
-  eName.value = data.name||"";
-  eNick.value = data.nick||"";
-  eTG.value = data.telegram||"";
-  eTT.value = data.tiktok||"";
-  eBD.value = data.birthday||"";
+  pName.innerText=data.name;
+  eName.value=data.name||"";
+  eNick.value=data.nick||"";
+  eTG.value=data.telegram||"";
+  eTT.value=data.tiktok||"";
+  eBD.value=data.birthday||"";
 
   panel.style.right="0";
 }
@@ -157,11 +224,14 @@ async function saveData(){
   loadData();
 }
 
+// MONEY
+
 async function addMoney(id,amount){
   const {data} = await db.from("donators").select("*").eq("id",id).single();
 
-  const month = getCurMonth();
+  const month = getMonth();
   const history = data.history||{};
+
   history[month]=(history[month]||0)+amount;
 
   await db.from("donators").update({
@@ -173,11 +243,10 @@ async function addMoney(id,amount){
 }
 
 async function deleteDonator(id){
+  if(!confirm("Удалить?")) return;
   await db.from("donators").delete().eq("id",id);
   loadData();
 }
-
-const logout = ()=>db.auth.signOut().then(()=>location.reload());
 </script>
 
 </body>
