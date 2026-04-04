@@ -16,50 +16,49 @@ body{background:#0f0f14;color:white;}
 
 input{width:100%;padding:10px;margin-bottom:10px;border-radius:8px;border:none;background:#232336;color:white;}
 button{padding:10px;background:#7c3aed;border:none;border-radius:8px;color:white;cursor:pointer;}
+.btn-secondary {background:#44445c; margin-top: 10px;}
 
 .app{display:none;padding:20px;}
 
 table{width:100%;border-collapse:collapse;background:#181825;}
 td,th{padding:10px;border-bottom:1px solid #2a2a3f;}
 
-.panel{position:fixed;right:-400px;top:0;width:320px;height:100%;background:#111;padding:20px;transition:.3s;}
+.panel{position:fixed;right:-400px;top:0;width:320px;height:100%;background:#111;padding:20px;transition:.3s; z-index: 100;}
 </style>
 </head>
 
 <body>
 
-<!-- AUTH -->
 <div class="auth-container" id="auth">
 <div class="auth-box">
-<h2 id="authTitle">Вход</h2>
+<h2 id="authTitle" style="margin-bottom: 15px;">Вход</h2>
 
-<input id="email">
-<input id="password" type="password">
+<input id="email" placeholder="Email" type="email">
+<input id="password" placeholder="Пароль" type="password">
 
-<button onclick="handleAuth()">Продолжить</button>
+<button onclick="handleAuth()" style="width: 100%;">Продолжить</button>
 
-<div onclick="toggleMode()" style="margin-top:10px;cursor:pointer;color:#aaa;">
-Переключить режим
+<div onclick="toggleMode()" style="margin-top:15px;cursor:pointer;color:#aaa;text-align:center;font-size: 14px;">
+Переключить на регистрацию
 </div>
 </div>
 </div>
 
-<!-- APP -->
 <div class="app" id="app">
 
-<div style="display:flex;gap:10px;margin-bottom:10px;">
-<input id="search" placeholder="Имя..." oninput="loadData()">
+<div style="display:flex;gap:10px;margin-bottom:15px;">
+<input id="search" placeholder="Поиск или имя для добавления..." oninput="loadData()" style="margin-bottom: 0;">
 <button onclick="addDonator()">+ Добавить</button>
-<button onclick="logout()">Выход</button>
+<button onclick="logout()" class="btn-secondary" style="margin-top: 0;">Выход</button>
 </div>
 
 <table>
 <thead>
 <tr>
-<th>VIP</th>
-<th>Имя</th>
-<th>Месяц</th>
-<th>Всего</th>
+<th style="text-align: left;">VIP</th>
+<th style="text-align: left;">Имя</th>
+<th style="text-align: left;">Месяц</th>
+<th style="text-align: left;">Всего</th>
 <th></th>
 </tr>
 </thead>
@@ -68,17 +67,26 @@ td,th{padding:10px;border-bottom:1px solid #2a2a3f;}
 
 </div>
 
-<!-- PANEL -->
 <div class="panel" id="panel">
-<h3 id="pName"></h3>
+<h3 id="pName" style="margin-bottom: 15px;"></h3>
 
+<label style="font-size: 12px; color: #aaa;">Имя</label>
 <input id="eName">
+
+<label style="font-size: 12px; color: #aaa;">Никнейм</label>
 <input id="eNick">
+
+<label style="font-size: 12px; color: #aaa;">Telegram</label>
 <input id="eTG">
+
+<label style="font-size: 12px; color: #aaa;">TikTok</label>
 <input id="eTT">
+
+<label style="font-size: 12px; color: #aaa;">Дата рождения</label>
 <input id="eBD" type="date">
 
-<button onclick="saveData()">Сохранить</button>
+<button onclick="saveData()" style="width: 100%; margin-top: 10px;">Сохранить</button>
+<button onclick="closePanel()" class="btn-secondary" style="width: 100%;">Закрыть</button>
 </div>
 
 <script>
@@ -93,162 +101,208 @@ let currentId = null;
 const MONTHS = ["Янв","Фев","Мар","Апр","Май","Июн","Июл","Авг","Сен","Окт","Ноя","Дек"];
 const getMonth = () => MONTHS[new Date().getMonth()];
 
+// Надежно получаем элементы интерфейса
+const elAuth = document.getElementById("auth");
+const elApp = document.getElementById("app");
+const elAuthTitle = document.getElementById("authTitle");
+const elSearch = document.getElementById("search");
+const elTbody = document.getElementById("tbody");
+const elPanel = document.getElementById("panel");
+const elPName = document.getElementById("pName");
+const elEName = document.getElementById("eName");
+const elENick = document.getElementById("eNick");
+const elETG = document.getElementById("eTG");
+const elETT = document.getElementById("eTT");
+const elEBD = document.getElementById("eBD");
+
 // AUTH
 
 function toggleMode(){
-  isLogin=!isLogin;
-  authTitle.innerText = isLogin ? "Вход" : "Регистрация";
+  isLogin = !isLogin;
+  elAuthTitle.innerText = isLogin ? "Вход" : "Регистрация";
+  document.querySelector(".auth-box div[onclick]").innerText = isLogin ? "Переключить на регистрацию" : "Уже есть аккаунт? Войти";
 }
 
 async function handleAuth(){
   const email = document.getElementById("email").value;
   const password = document.getElementById("password").value;
 
+  if(!email || !password) return alert("Введите email и пароль");
+
   if(isLogin){
-    const {error} = await db.auth.signInWithPassword({email,password});
-    if(error) return alert(error.message);
-  }else{
-    const {error} = await db.auth.signUp({email,password});
-    if(error) return alert(error.message);
-    alert("Проверь почту");
+    const {error} = await db.auth.signInWithPassword({email, password});
+    if(error) return alert("Ошибка входа: " + error.message);
+  } else {
+    const {error} = await db.auth.signUp({email, password});
+    if(error) return alert("Ошибка регистрации: " + error.message);
+    alert("Успешно! Проверь почту для подтверждения или попробуй войти.");
   }
 
   checkUser();
 }
 
 async function checkUser(){
-  const {data:{user}} = await db.auth.getUser();
+  const {data:{user}, error} = await db.auth.getUser();
 
   if(user){
-    auth.style.display="none";
-    app.style.display="block";
+    elAuth.style.display = "none";
+    elApp.style.display = "block";
     loadData();
   }
 }
 checkUser();
 
 function logout(){
-  db.auth.signOut().then(()=>location.reload());
+  db.auth.signOut().then(() => location.reload());
 }
 
 // DATA
 
 function getVIP(total){
-  if(total>=1000) return 5;
-  if(total>=500) return 4;
-  if(total>=250) return 3;
-  if(total>=100) return 2;
-  if(total>=50) return 1;
+  if(total >= 1000) return 5;
+  if(total >= 500) return 4;
+  if(total >= 250) return 3;
+  if(total >= 100) return 2;
+  if(total >= 50) return 1;
   return 0;
 }
 
 async function loadData(){
-  const q = search.value.toLowerCase();
+  const q = elSearch.value.toLowerCase();
 
-  const {data} = await db.from("donators").select("*");
+  const {data, error} = await db.from("donators").select("*");
+  
+  if (error) {
+    console.error("Ошибка загрузки данных:", error);
+    return;
+  }
 
-  const tbody = document.getElementById("tbody");
-  tbody.innerHTML="";
+  elTbody.innerHTML = "";
 
-  data
-  .filter(d=>!q || d.name?.toLowerCase().includes(q))
-  .sort((a,b)=>(b.total||0)-(a.total||0))
-  .forEach(d=>{
+  // Защита: если data пустая, используем пустой массив
+  const safeData = data || [];
 
-    const month = (d.history||{})[getMonth()]||0;
+  safeData
+  .filter(d => !q || d.name?.toLowerCase().includes(q))
+  .sort((a,b) => (b.total || 0) - (a.total || 0))
+  .forEach(d => {
+    const month = (d.history || {})[getMonth()] || 0;
+    const tr = document.createElement("tr");
 
-    const tr=document.createElement("tr");
-
-    tr.innerHTML=`
+    tr.innerHTML = `
       <td>VIP ${getVIP(d.total||0)}</td>
       <td>${d.name||""}</td>
       <td>${month}€</td>
       <td>${d.total||0}€</td>
-      <td>
-        <button onclick="addMoney('${d.id}',50)">+50</button>
+      <td style="text-align: right;">
+        <button onclick="addMoney('${d.id}', 50)">+50</button>
         <button onclick="openPanel('${d.id}')">✎</button>
-        <button onclick="deleteDonator('${d.id}')">✕</button>
+        <button onclick="deleteDonator('${d.id}')" style="background:#e11d48;">✕</button>
       </td>
     `;
-
-    tbody.appendChild(tr);
+    elTbody.appendChild(tr);
   });
 }
 
 // ADD
 
 async function addDonator(){
-  const name = search.value;
-  if(!name) return;
+  const name = elSearch.value;
+  if(!name) {
+    alert("Введите имя в поле поиска для добавления");
+    return;
+  }
 
   const {data:{user}} = await db.auth.getUser();
+  if(!user) return alert("Необходима авторизация");
 
-  await db.from("donators").insert([{
+  const {error} = await db.from("donators").insert([{
     name,
-    total:0,
-    history:{},
-    user_id:user.id
+    total: 0,
+    history: {},
+    user_id: user.id
   }]);
 
-  search.value="";
+  if (error) {
+    alert("Ошибка добавления: " + error.message);
+    return;
+  }
+
+  elSearch.value = "";
   loadData();
 }
 
 // PANEL
 
 async function openPanel(id){
-  currentId=id;
+  currentId = id;
+  const {data, error} = await db.from("donators").select("*").eq("id", id).single();
 
-  const {data} = await db.from("donators").select("*").eq("id",id).single();
+  if(error || !data) {
+    alert("Не удалось загрузить данные пользователя");
+    return;
+  }
 
-  pName.innerText=data.name;
-  eName.value=data.name||"";
-  eNick.value=data.nick||"";
-  eTG.value=data.telegram||"";
-  eTT.value=data.tiktok||"";
-  eBD.value=data.birthday||"";
+  elPName.innerText = data.name || "Без имени";
+  elEName.value = data.name || "";
+  elENick.value = data.nick || "";
+  elETG.value = data.telegram || "";
+  elETT.value = data.tiktok || "";
+  elEBD.value = data.birthday || "";
 
-  panel.style.right="0";
+  elPanel.style.right = "0";
 }
 
 async function saveData(){
-  await db.from("donators").update({
-    name:eName.value,
-    nick:eNick.value,
-    telegram:eTG.value,
-    tiktok:eTT.value,
-    birthday:eBD.value
-  }).eq("id",currentId);
+  const {error} = await db.from("donators").update({
+    name: elEName.value,
+    nick: elENick.value,
+    telegram: elETG.value,
+    tiktok: elETT.value,
+    birthday: elEBD.value
+  }).eq("id", currentId);
 
-  panel.style.right="-400px";
+  if (error) {
+    alert("Ошибка сохранения: " + error.message);
+    return;
+  }
+
+  elPanel.style.right = "-400px";
   loadData();
+}
+
+function closePanel() {
+  elPanel.style.right = "-400px";
 }
 
 // MONEY
 
-async function addMoney(id,amount){
-  const {data} = await db.from("donators").select("*").eq("id",id).single();
+async function addMoney(id, amount){
+  const {data, error: fetchError} = await db.from("donators").select("*").eq("id", id).single();
+  if (fetchError || !data) return alert("Ошибка поиска пользователя");
 
   const month = getMonth();
-  const history = data.history||{};
+  const history = data.history || {};
 
-  history[month]=(history[month]||0)+amount;
+  history[month] = (history[month] || 0) + amount;
 
-  await db.from("donators").update({
-    total:(data.total||0)+amount,
+  const {error: updateError} = await db.from("donators").update({
+    total: (data.total || 0) + amount,
     history
-  }).eq("id",id);
+  }).eq("id", id);
+
+  if (updateError) return alert("Ошибка пополнения");
 
   loadData();
 }
 
 async function deleteDonator(id){
   if(!confirm("Удалить?")) return;
-  await db.from("donators").delete().eq("id",id);
+  const {error} = await db.from("donators").delete().eq("id", id);
+  if (error) alert("Ошибка удаления");
   loadData();
 }
 </script>
 
 </body>
 </html>
-
