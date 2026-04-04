@@ -194,11 +194,15 @@ async function loadData(){
       <td>${d.name||""}</td>
       <td>${month}€</td>
       <td>${d.total||0}€</td>
-      <td style="text-align: right;">
-        <button onclick="addMoney('${d.id}', 50)">+50</button>
-        <button onclick="openPanel('${d.id}')">✎</button>
+      <td style="text-align: right; display: flex; justify-content: flex-end; gap: 8px;">
+        <button onclick="addMoney('${d.id}', 10)">+10</button>
+        <button onclick="addMoney('${d.id}', 30)">+30</button>
+        <button onclick="addMoney('${d.id}', 100)">+100</button>
+        
+        <button onclick="openPanel('${d.id}')" style="margin-left: 10px;">✎</button>
         <button onclick="deleteDonator('${d.id}')" style="background:#e11d48;">✕</button>
       </td>
+
     `;
     elTbody.appendChild(tr);
   });
