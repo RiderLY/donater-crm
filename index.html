@@ -159,13 +159,19 @@ function logout(){
 // DATA
 
 function getVIP(total){
-  if(total >= 1000) return 5;
-  if(total >= 500) return 4;
-  if(total >= 250) return 3;
-  if(total >= 100) return 2;
-  if(total >= 50) return 1;
-  return 0;
+  if(total >= 6000) return "10 (Supreme)";
+  if(total >= 4000) return "9 (Mythic)";
+  if(total >= 2500) return "8 (Legend)";
+  if(total >= 1500) return "7 (Royal)";
+  if(total >= 1000) return "6 (Elite)";
+  if(total >= 750) return "5 (Diamond)";
+  if(total >= 500) return "4 (Platinum)";
+  if(total >= 300) return "3 (Gold)";
+  if(total >= 150) return "2 (Silver)";
+  if(total >= 50) return "1 (Старт)";
+  return "0";
 }
+
 
 async function loadData(){
   const q = elSearch.value.toLowerCase();
