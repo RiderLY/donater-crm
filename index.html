@@ -1,141 +1,202 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<title>Stellar CRM FINAL</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stellar CRM: Gatekeeper v2.7</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root { --primary: #7c3aed; --bg: #0b0b0f; --card: #16161e; --text: #ececed; --border: #2a2a3f; --green: #10b981; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background: var(--bg); color: var(--text); min-height: 100vh; display: flex; align-items: center; justify-content: center; }
 
-<style>
-body{background:#0b0b0f;color:white;font-family:Inter;margin:0}
-#auth,#app{max-width:900px;margin:auto;padding:30px}
-input{width:100%;padding:10px;margin:10px 0;background:#111;border:1px solid #333;color:white;border-radius:8px}
-button{padding:10px;border:none;border-radius:8px;background:#7c3aed;color:white;cursor:pointer}
-table{width:100%;margin-top:20px;border-collapse:collapse}
-td,th{padding:10px;border-bottom:1px solid #222}
-</style>
+        /* AUTH SCREEN */
+        #auth-screen { width: 380px; background: var(--card); padding: 40px; border-radius: 24px; border: 1px solid var(--border); box-shadow: 0 25px 60px rgba(0,0,0,0.6); }
+        .auth-header { text-align: center; margin-bottom: 30px; }
+        .auth-header h2 { font-size: 28px; letter-spacing: -1px; }
+        
+        /* APP UI */
+        #app { display: none; width: 100%; max-width: 1200px; padding: 40px; align-self: flex-start; }
+        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: var(--card); padding: 20px; border-radius: 16px; border: 1px solid var(--border); }
+        .stat-card span { display: block; font-size: 11px; color: #71717a; text-transform: uppercase; margin-bottom: 5px; }
+        .stat-card b { font-size: 24px; color: var(--primary); }
+
+        /* Таблица & Формы */
+        input { width: 100%; background: #111; border: 1px solid var(--border); color: white; padding: 12px; border-radius: 12px; outline: none; margin-bottom: 15px; transition: 0.3s; }
+        input:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.2); }
+        
+        button { padding: 12px 20px; border-radius: 12px; border: none; cursor: pointer; font-weight: 700; transition: 0.2s; }
+        .btn-p { background: var(--primary); color: white; width: 100%; }
+        .btn-p:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(124, 58, 237, 0.4); }
+
+        .table-box { background: var(--card); border-radius: 20px; border: 1px solid var(--border); overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #1c1c28; padding: 16px; font-size: 10px; color: #71717a; text-transform: uppercase; text-align: left; }
+        td { padding: 18px 16px; border-bottom: 1px solid var(--border); }
+
+        .panel { position: fixed; top: 0; right: -500px; width: 450px; height: 100%; background: var(--card); padding: 40px; transition: 0.5s cubic-bezier(0.4, 0, 0.2, 1); z-index: 1000; border-left: 1px solid var(--primary); }
+        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: none; z-index: 900; backdrop-filter: blur(8px); }
+    </style>
 </head>
 <body>
 
-<div id="auth">
-<h2>Вход</h2>
-<input id="email" placeholder="Email">
-<input id="pass" type="password" placeholder="Пароль">
-<input id="invite" placeholder="Invite code">
-<button onclick="auth()">Войти</button>
+<div id="auth-screen">
+    <div class="auth-header">
+        <h2>STELLAR <span style="color:var(--primary)">CRM</span></h2>
+        <p style="color:#71717a; font-size: 13px; margin-top: 5px;">Production Ready v2.7</p>
+    </div>
+    <input id="email" type="email" placeholder="Email">
+    <input id="pass" type="password" placeholder="Пароль">
+    <input id="invite-code" type="text" placeholder="Код приглашения" style="border-style: dashed;">
+    <button class="btn-p" onclick="handleAuth()">Войти / Создать аккаунт</button>
 </div>
 
-<div id="app" style="display:none">
-<h2>CRM 😈</h2>
-<button onclick="addDonator()">+ Донатер</button>
-<button onclick="logout()">Выход</button>
+<div id="app">
+    <div class="stats-grid">
+        <div class="stat-card"><span>Всего донатеров</span><b id="count-don">0</b></div>
+        <div class="stat-card"><span>Выручка (Life-time)</span><b id="total-sum">0€</b></div>
+        <div class="stat-card"><span>Текущий месяц</span><b id="month-name">...</b></div>
+    </div>
 
-<input id="search" placeholder="Поиск..." oninput="load()">
+    <div class="header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <input id="search" placeholder="Поиск по имени..." oninput="loadData()" style="max-width: 300px; margin:0">
+        <div style="display: flex; gap: 10px;">
+            <button class="btn-p" onclick="addDonator()" style="width: auto;">+ Добавить</button>
+            <button onclick="logout()" style="background:#222; color:white;">Выход</button>
+        </div>
+    </div>
 
-<table>
-<thead>
-<tr><th>Имя</th><th>Месяц</th><th>Всего</th></tr>
-</thead>
-<tbody id="tbody"></tbody>
-</table>
+    <div class="table-box">
+        <table>
+            <thead>
+                <tr>
+                    <th>Ранг</th>
+                    <th>Спонсор</th>
+                    <th>Сумма (Месяц)</th>
+                    <th>Всего</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+        </table>
+    </div>
+</div>
+
+<div class="overlay" id="overlay" onclick="closePanel()"></div>
+<div class="panel" id="panel">
+    <h3 id="pName" style="margin-bottom: 30px;"></h3>
+    <input id="eName" placeholder="Никнейм">
+    <input id="eTG" placeholder="Telegram">
+    <button class="btn-p" onclick="saveData()">Сохранить изменения</button>
 </div>
 
 <script>
-const SUPABASE_URL="https://ltrglnjbsyokelkgqbbh.supabase.co";
-const SUPABASE_ANON_KEY="ТВОЙ_KEY";
-const INVITE="STELLAR-PRO-2026";
+    const SUPABASE_URL = "https://ltrglnjbsyokelkgqbbh.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx0cmdsbmpic3lvZWxrYWdxYmJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUxNzgyNDksImV4cCI6MjA5MDc1NDI0OX0.VhZiD9OVDfv3nlfYysBNXPsax4RkevErwWImMlqW9BM";
+    const MASTER_INVITE = "STELLAR-PRO-2026"; // Тот самый код
 
-const db=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+    const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const MONTHS = ["Янв", "Фев", "Мар", "Апр", "Май", "Июн", "Июл", "Авг", "Сен", "Окт", "Ноя", "Дек"];
+    let currentId = null;
 
-const MONTHS=["Янв","Фев","Мар","Апр","Май","Июн","Июл","Авг","Сен","Окт","Ноя","Дек"];
-const curMonth=()=>MONTHS[new Date().getMonth()];
+    const getCurMonth = () => MONTHS[new Date().getMonth()];
 
-async function auth(){
-const email=emailInput.value;
-const password=passInput.value;
-const invite=inviteInput.value;
+    async function handleAuth() {
+        const email = document.getElementById("email").value;
+        const password = document.getElementById("pass").value;
+        const invite = document.getElementById("invite-code").value;
 
-let {error}=await db.auth.signInWithPassword({email,password});
+        const { error: signInError } = await db.auth.signInWithPassword({ email, password });
 
-if(error){
-if(invite!==INVITE)return alert("Нет доступа");
+        if (signInError) {
+            // Если входа нет — проверяем инвайт для регистрации
+            if (invite !== MASTER_INVITE) {
+                return alert("Неверный код приглашения. Доступ закрыт 💀");
+            }
+            const { error: signUpError } = await db.auth.signUp({ email, password });
+            if (signUpError) return alert(signUpError.message);
+            alert("Аккаунт создан! Теперь войдите.");
+        }
+        checkUser();
+    }
 
-await db.auth.signUp({email,password});
-await db.auth.signInWithPassword({email,password});
-}
+    async function checkUser() {
+        const { data: { user } } = await db.auth.getUser();
+        if (user) {
+            document.getElementById("auth-screen").style.display = "none";
+            document.getElementById("app").style.display = "block";
+            document.getElementById("month-name").innerText = getCurMonth();
+            loadData();
+        }
+    }
+    checkUser();
 
-checkUser();
-}
+    async function loadData() {
+        const q = document.getElementById("search").value.toLowerCase();
+        const { data, error } = await db.from("donators").select("*");
+        if (error || !data) return;
 
-async function checkUser(){
-const {data:{user}}=await db.auth.getUser();
+        const filtered = data.filter(d => !q || d.name?.toLowerCase().includes(q));
+        filtered.sort((a, b) => (b.total || 0) - (a.total || 0));
 
-if(user){
-auth.style.display="none";
-app.style.display="block";
-load();
-}
-}
-checkUser();
+        // Обновляем статистику
+        document.getElementById("count-don").innerText = filtered.length;
+        const sum = filtered.reduce((acc, curr) => acc + (curr.total || 0), 0);
+        document.getElementById("total-sum").innerText = sum + "€";
 
-function logout(){
-db.auth.signOut().then(()=>location.reload());
-}
+        const tbody = document.getElementById("tbody");
+        tbody.innerHTML = "";
 
-async function load(){
-const q=search.value.toLowerCase();
+        filtered.forEach(d => {
+            const mVal = d.history?.[getCurMonth()] || 0;
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td><b style="color:var(--primary)">LVL ${Math.floor((d.total || 0) / 100)}</b></td>
+                <td><div style="font-weight:700">${d.name}</div><div style="font-size:11px;color:#71717a">${d.telegram || '@-'}</div></td>
+                <td><b>${mVal}€</b></td>
+                <td style="color:var(--green)"><b>${d.total || 0}€</b></td>
+                <td><button onclick="openPanel('${d.id}')" style="background:#222; color:var(--primary)">✎</button></td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
 
-const {data:{user}}=await db.auth.getUser();
-if(!user)return;
+    async function addDonator() {
+        const name = prompt("Имя:");
+        if (!name) return;
+        const { data: { user } } = await db.auth.getUser();
+        await db.from("donators").insert([{ name, total: 0, history: {}, user_id: user.id }]);
+        loadData();
+    }
 
-const {data,error}=await db.from("donators")
-.select("*")
-.eq("user_id",user.id);
+    async function openPanel(id) {
+        currentId = id;
+        const { data } = await db.from("donators").select("*").eq("id", id).single();
+        document.getElementById("pName").innerText = data.name;
+        document.getElementById("eName").value = data.name;
+        document.getElementById("eTG").value = data.telegram || "";
+        document.getElementById("panel").style.right = "0";
+        document.getElementById("overlay").style.display = "block";
+    }
 
-if(error||!data)return;
+    function closePanel() {
+        document.getElementById("panel").style.right = "-500px";
+        document.getElementById("overlay").style.display = "none";
+    }
 
-tbody.innerHTML="";
+    async function saveData() {
+        await db.from("donators").update({
+            name: document.getElementById("eName").value,
+            telegram: document.getElementById("eTG").value
+        }).eq("id", currentId);
+        closePanel();
+        loadData();
+    }
 
-data.filter(d=>!q||d.name?.toLowerCase().includes(q))
-.forEach(d=>{
-const m=(d.history||{})[curMonth()]||0;
-
-tbody.innerHTML+=`
-<tr>
-<td>${d.name}</td>
-<td>${m}€ <button onclick="addMoney('${d.id}',10)">+10</button></td>
-<td>${d.total||0}€</td>
-</tr>`;
-});
-}
-
-async function addMoney(id,amt){
-const {data}=await db.from("donators").select("history").eq("id",id).single();
-if(!data)return;
-
-const h=data.history||{};
-const m=curMonth();
-
-h[m]=(Number(h[m])||0)+amt;
-
-const total=Object.values(h).map(v=>Number(v)||0).reduce((a,b)=>a+b,0);
-
-await db.from("donators").update({history:h,total}).eq("id",id);
-
-load();
-}
-
-async function addDonator(){
-const name=prompt("Имя");
-if(!name)return;
-
-const {data:{user}}=await db.auth.getUser();
-if(!user)return;
-
-await db.from("donators").insert([{name,total:0,history:{},user_id:user.id}]);
-
-load();
-}
+    const logout = () => db.auth.signOut().then(() => location.reload());
 </script>
-
 </body>
 </html>
+
+
