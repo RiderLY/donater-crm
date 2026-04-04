@@ -87,11 +87,21 @@
         <button onclick="closePanel()" class="secondary" style="padding:5px 10px">&times;</button>
     </div>
 
-    <label style="color:#666; font-size:12px">Имя профиля</label>
+   <label style="color:#666; font-size:12px">Имя профиля</label>
     <input id="eName" type="text">
+    
+    <label style="color:#666; font-size:12px">Никнейм (в игре/на стриме)</label>
+    <input id="eNick" type="text">
     
     <label style="color:#666; font-size:12px">Telegram / Контакт</label>
     <input id="eTG" type="text">
+
+    <label style="color:#666; font-size:12px">TikTok (ссылка или ник)</label>
+    <input id="eTT" type="text">
+
+    <label style="color:#666; font-size:12px">Дата рождения</label>
+    <input id="eBD" type="date" style="color-scheme: dark;">
+
 
     <div style="margin-top:20px">
         <label>История по годам:</label>
@@ -236,9 +246,14 @@ async function quickAdd(id, amount) {
 function openPanel(id) {
     state.currentEditId = id;
     const d = state.donators.find(x => x.id === id);
+    
+    // Заполняем текстовые поля данными из базы
     document.getElementById('pName').innerText = d.name;
     document.getElementById('eName').value = d.name;
-    document.getElementById('eTG').value = d.telegram || '';
+    document.getElementById('eNick').value = d.nick || "";     // Добавили Ник
+    document.getElementById('eTG').value = d.telegram || "";   // Telegram
+    document.getElementById('eTT').value = d.tiktok || "";     // Добавили TikTok
+    document.getElementById('eBD').value = d.birthday || "";   // Добавили Дату рождения
 
     const ys = document.getElementById('yearSelect');
     ys.innerHTML = [2024, 2025, 2026, 2027].map(y => `<option value="${y}">${y}</option>`).join('');
@@ -248,32 +263,60 @@ function openPanel(id) {
     document.getElementById('panel').classList.add('open');
 }
 
+}
+
 function renderHistoryFields() {
     const d = state.donators.find(x => x.id === state.currentEditId);
     const year = document.getElementById('yearSelect').value;
     const container = document.getElementById('historyFields');
+    
     container.innerHTML = MONTHS.map(m => {
         const key = `${m} ${year}`;
         const val = (d.history || {})[key] || 0;
         return `
-            <div style="background:var(--input); padding:8px; border-radius:6px">
+            <div style="background:var(--input); padding:8px; border-radius:6px; border: 1px solid #2a2a3f;">
                 <div style="font-size:10px; color:#666; margin-bottom:4px">${m}</div>
-                <input type="number" step="0.01" min="0" class="h-input" data-key="${key}" value="${val}" style="margin:0; padding:4px; font-size:12px; border:none">
+                <div style="display:flex; align-items:center; gap:4px">
+                    <input type="number" step="0.01" min="0" class="h-input" data-key="${key}" value="${val}" 
+                           style="margin:0; padding:2px; font-size:14px; border:none; background:transparent; color:white; width:100%; outline:none;">
+                    <span style="font-size:14px; color:#666; font-weight:bold">€</span>
+                </div>
             </div>
         `;
     }).join('');
 }
+
 
 async function saveData() {
     showLoading(true);
     const d = state.donators.find(x => x.id === state.currentEditId);
     const inputs = document.querySelectorAll('.h-input');
     
+    // Сначала собираем историю донатов по месяцам
     inputs.forEach(i => {
-        const val = Math.max(0, parseFloat(i.value) || 0); // ВАЛИДАЦИЯ: Запрет отрицательных
-        if (val > 0) d.history[i.dataset.key] = val;
+        const val = Math.max(0, parseFloat(i.value) || 0);
+        if(val > 0) d.history[i.dataset.key] = val;
         else delete d.history[i.dataset.key];
     });
+
+    // А теперь собираем все текстовые поля из панели
+    d.name = document.getElementById('eName').value;
+    d.nick = document.getElementById('eNick').value;     // Сохраняем Ник
+    d.telegram = document.getElementById('eTG').value;   // Telegram
+    d.tiktok = document.getElementById('eTT').value;     // Сохраняем TikTok
+    d.birthday = document.getElementById('eBD').value;   // Сохраняем Дату рождения
+    
+    // Пересчитываем общую сумму
+    d.total = Object.values(d.history).reduce((a, b) => a + b, 0);
+
+    // Отправляем обновленный объект в базу
+    await db.from('donators').update(d).eq('id', d.id);
+
+    closePanel();
+    renderTable();
+    showLoading(false);
+}
+
 
     d.name = document.getElementById('eName').value;
     d.telegram = document.getElementById('eTG').value;
