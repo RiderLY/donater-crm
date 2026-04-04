@@ -175,7 +175,13 @@ tr.innerHTML = `
 <td><div style="font-weight:700">${d.name}</div><div style="font-size:11px;color:#71717a">${d.telegram || '@-'}</div></td>
 <td><b>${mVal}€</b></td>
 <td style="color:var(--green)"><b>${d.total || 0}€</b></td>
-<td><button onclick="openPanel('${d.id}')" style="background:#222; color:var(--primary)">✎</button></td>
+<td style="display:flex; gap:6px;">
+<button onclick="addMoney('${d.id}', 50)" style="background:#10b981; color:black;">+50</button>
+<button onclick="addMoney('${d.id}', 100)" style="background:#22c55e; color:black;">+100</button>
+<button onclick="openPanel('${d.id}')" style="background:#222; color:var(--primary)">✎</button>
+<button onclick="deleteDonator('${d.id}')" style="background:#ef4444; color:white;">✕</button>
+</td>
+
 `;
 tbody.appendChild(tr);
 });
@@ -226,9 +232,33 @@ loadData();
 }
 
 const logout = () => db.auth.signOut().then(() => location.reload());
+
+
+
+async function addMoney(id, amount) {
+    const { data } = await db.from("donators").select("*").eq("id", id).single();
+
+    const month = getCurMonth();
+    const history = data.history || {};
+
+    history[month] = (history[month] || 0) + amount;
+
+    await db.from("donators").update({
+        total: (data.total || 0) + amount,
+        history: history
+    }).eq("id", id);
+
+    loadData();
+}
+
+async function deleteDonator(id) {
+    if (!confirm("Удалить донатера?")) return;
+
+    await db.from("donators").delete().eq("id", id);
+    loadData();
+}
+
 </script>
 </body>
 </html>
-
-
 
