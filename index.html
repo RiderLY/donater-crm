@@ -41,7 +41,7 @@
 
 <div id="auth-screen" class="flex-center">
     <div class="box">
-        <h2 style="margin-bottom:20px; text-align:center">Stellar PRO</h2>
+        <h2 id="authTitle" style="margin-bottom:20px; text-align:center">Stellar PRO</h2>
         <input id="email" type="email" placeholder="Email">
         <input id="pass" type="password" placeholder="Пароль">
         <button id="authBtn" style="width:100%" onclick="handleAuth()">Продолжить</button>
@@ -87,7 +87,7 @@
         <button onclick="closePanel()" class="secondary" style="padding:5px 10px">&times;</button>
     </div>
 
-   <label style="color:#666; font-size:12px">Имя профиля</label>
+    <label style="color:#666; font-size:12px">Имя профиля</label>
     <input id="eName" type="text">
     
     <label style="color:#666; font-size:12px">Никнейм (в игре/на стриме)</label>
@@ -101,7 +101,6 @@
 
     <label style="color:#666; font-size:12px">Дата рождения</label>
     <input id="eBD" type="date" style="color-scheme: dark;">
-
 
     <div style="margin-top:20px">
         <label>История по годам:</label>
@@ -148,7 +147,6 @@ async function handleAuth() {
     showLoading(false);
 }
 
-// Слушатель сессии (Авто-логин)
 db.auth.onAuthStateChange((event, session) => {
     if (session) {
         state.user = session.user;
@@ -209,8 +207,6 @@ function renderTable() {
     });
 }
 
-
-// --- ACTIONS ---
 async function addDonator() {
     const name = document.getElementById('newName').value;
     if (!name) return;
@@ -235,10 +231,7 @@ async function quickAdd(id, amount) {
     d.history[key] = (d.history[key] || 0) + amount;
     d.total += amount;
 
-    // Оптимистичное обновление UI
     renderTable();
-
-    // Фоновое обновление базы
     await db.from('donators').update({ history: d.history, total: d.total }).eq('id', id);
 }
 
@@ -247,13 +240,12 @@ function openPanel(id) {
     state.currentEditId = id;
     const d = state.donators.find(x => x.id === id);
     
-    // Заполняем текстовые поля данными из базы
     document.getElementById('pName').innerText = d.name;
     document.getElementById('eName').value = d.name;
-    document.getElementById('eNick').value = d.nick || "";     // Добавили Ник
-    document.getElementById('eTG').value = d.telegram || "";   // Telegram
-    document.getElementById('eTT').value = d.tiktok || "";     // Добавили TikTok
-    document.getElementById('eBD').value = d.birthday || "";   // Добавили Дату рождения
+    document.getElementById('eNick').value = d.nick || "";
+    document.getElementById('eTG').value = d.telegram || "";
+    document.getElementById('eTT').value = d.tiktok || "";
+    document.getElementById('eBD').value = d.birthday || "";
 
     const ys = document.getElementById('yearSelect');
     ys.innerHTML = [2024, 2025, 2026, 2027].map(y => `<option value="${y}">${y}</option>`).join('');
@@ -261,8 +253,6 @@ function openPanel(id) {
     
     renderHistoryFields();
     document.getElementById('panel').classList.add('open');
-}
-
 }
 
 function renderHistoryFields() {
@@ -286,43 +276,27 @@ function renderHistoryFields() {
     }).join('');
 }
 
-
 async function saveData() {
     showLoading(true);
     const d = state.donators.find(x => x.id === state.currentEditId);
     const inputs = document.querySelectorAll('.h-input');
     
-    // Сначала собираем историю донатов по месяцам
     inputs.forEach(i => {
         const val = Math.max(0, parseFloat(i.value) || 0);
         if(val > 0) d.history[i.dataset.key] = val;
         else delete d.history[i.dataset.key];
     });
 
-    // А теперь собираем все текстовые поля из панели
     d.name = document.getElementById('eName').value;
-    d.nick = document.getElementById('eNick').value;     // Сохраняем Ник
-    d.telegram = document.getElementById('eTG').value;   // Telegram
-    d.tiktok = document.getElementById('eTT').value;     // Сохраняем TikTok
-    d.birthday = document.getElementById('eBD').value;   // Сохраняем Дату рождения
-    
-    // Пересчитываем общую сумму
-    d.total = Object.values(d.history).reduce((a, b) => a + b, 0);
-
-    // Отправляем обновленный объект в базу
-    await db.from('donators').update(d).eq('id', d.id);
-
-    closePanel();
-    renderTable();
-    showLoading(false);
-}
-
-
-    d.name = document.getElementById('eName').value;
+    d.nick = document.getElementById('eNick').value;
     d.telegram = document.getElementById('eTG').value;
+    d.tiktok = document.getElementById('eTT').value;
+    d.birthday = document.getElementById('eBD').value;
+    
     d.total = Object.values(d.history).reduce((a, b) => a + b, 0);
 
     await db.from('donators').update(d).eq('id', d.id);
+
     closePanel();
     renderTable();
     showLoading(false);
@@ -354,21 +328,17 @@ function getNextTarget(t) {
 
 function showLoading(show) { document.getElementById('loading').style.display = show ? 'block' : 'none'; }
 function closePanel() { document.getElementById('panel').classList.remove('open'); }
-// Функция для добавления произвольной суммы (например, 37)
+
 function addCustomMoney(id) {
     const input = document.getElementById(`custom_${id}`);
     const val = parseFloat(input.value);
-    
     if (val > 0) {
-        quickAdd(id, val); // Вызываем уже готовую функцию добавления
-        input.value = '';  // Очищаем поле после нажатия
+        quickAdd(id, val);
+        input.value = '';
     } else {
         alert("Введите число больше 0");
     }
 }
-
 </script>
 </body>
 </html>
-
-
