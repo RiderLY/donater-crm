@@ -6,9 +6,9 @@
     <title>Stellar CRM PRO</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { --primary: #7c3aed; --bg: #0f0f14; --card: #181825; --input: #232336; --text: #eee; --danger: #ef4444; }
+        :root { --primary: #7c3aed; --bg: #0f0f14; --card: #181825; --input: #232336; --text: #eee; --danger: #ef4444; --warning: #d97706; }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', system-ui, sans-serif; }
-.tag-btn { background: var(--input); padding: 6px 10px; border-radius: 6px; font-size: 12px; cursor: pointer; border: 1px solid #2a2a3f; color: #888; transition: 0.2s; white-space: nowrap; user-select: none; }
+        .tag-btn { background: var(--input); padding: 6px 10px; border-radius: 6px; font-size: 12px; cursor: pointer; border: 1px solid #2a2a3f; color: #888; transition: 0.2s; white-space: nowrap; user-select: none; }
         .tag-btn:hover { border-color: #666; }
         .tag-btn.active { background: rgba(124, 58, 237, 0.2); border-color: var(--primary); color: white; }
 
@@ -17,26 +17,32 @@
         .flex-center { height: 100vh; display: flex; justify-content: center; align-items: center; }
         .box { background: var(--card); padding: 30px; border-radius: 16px; width: 340px; border: 1px solid #2a2a3f; }
         
-        input { width: 100%; padding: 12px; margin-bottom: 12px; border-radius: 8px; border: 1px solid #2a2a3f; background: var(--input); color: white; }
-        input:focus { border-color: var(--primary); outline: none; }
+        input, select, textarea { width: 100%; padding: 12px; margin-bottom: 12px; border-radius: 8px; border: 1px solid #2a2a3f; background: var(--input); color: white; }
+        input:focus, select:focus, textarea:focus { border-color: var(--primary); outline: none; }
         
-        button { padding: 12px 20px; background: var(--primary); border: none; border-radius: 8px; color: white; cursor: pointer; font-weight: 600; transition: 0.2s; }
+        button { padding: 12px 20px; background: var(--primary); border: none; border-radius: 8px; color: white; cursor: pointer; font-weight: 600; transition: 0.2s; display: inline-flex; align-items: center; justify-content: center;}
         button:hover { filter: brightness(1.1); }
         button.secondary { background: #2a2a3f; }
+        button.secondary:hover { background: #3f3f5a; }
         button.danger { background: var(--danger); }
+        button.warning { background: var(--warning); }
 
         #app { display: none; padding: 40px; max-width: 1300px; margin: 0 auto; }
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
         
-        .table-container { background: var(--card); border-radius: 12px; border: 1px solid #2a2a3f; }
+        .table-container { background: var(--card); border-radius: 12px; border: 1px solid #2a2a3f; overflow: hidden; }
         table { width: 100%; border-collapse: collapse; }
         th { text-align: left; padding: 15px; color: #666; font-size: 12px; letter-spacing: 1px; border-bottom: 1px solid #2a2a3f; }
-        td { padding: 15px; border-bottom: 1px solid #232336; }
+        td { padding: 15px; border-bottom: 1px solid #232336; transition: 0.3s;}
+        
+        /* Класс для строки на паузе */
+        .paused-row { opacity: 0.4; filter: grayscale(100%); }
+        .paused-row:hover { opacity: 0.8; filter: grayscale(50%); }
 
         .panel { position: fixed; right: -450px; top: 0; width: 400px; height: 100%; background: #0a0a0f; padding: 30px; transition: 0.4s; z-index: 1000; border-left: 1px solid #2a2a3f; overflow-y: auto; }
         .panel.open { right: 0; }
         
-        .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 2px; background: var(--primary); display: none; }
+        .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 2px; background: var(--primary); display: none; z-index: 9999; }
     </style>
 </head>
 <body>
@@ -84,7 +90,6 @@
         <button class="secondary" onclick="exportToCSV()" style="margin-left:auto;">Скачать CSV</button>
     </div>
 
-
     <div class="table-container">
         <table>
             <thead>
@@ -109,20 +114,21 @@
     </div>
 
     <label style="color:#666; font-size:12px">Имя профиля</label>
-    <input id="eName" type="text">
+    <input id="eName" type="text" oninput="autoSave()">
     
     <label style="color:#666; font-size:12px">Никнейм (в игре/на стриме)</label>
-    <input id="eNick" type="text">
+    <input id="eNick" type="text" oninput="autoSave()">
     
     <label style="color:#666; font-size:12px">Telegram / Контакт</label>
-    <input id="eTG" type="text">
+    <input id="eTG" type="text" oninput="autoSave()">
 
     <label style="color:#666; font-size:12px">TikTok (ссылка или ник)</label>
-    <input id="eTT" type="text">
+    <input id="eTT" type="text" oninput="autoSave()">
 
     <label style="color:#666; font-size:12px">Дата рождения</label>
-    <input id="eBD" type="date" style="color-scheme: dark;">
-<label style="color:#666; font-size:12px; margin-top:10px; display:block;">Быстрая метка</label>
+    <input id="eBD" type="date" style="color-scheme: dark;" oninput="autoSave()">
+
+    <label style="color:#666; font-size:12px; margin-top:10px; display:block;">Быстрая метка</label>
     <div style="display:flex; gap:5px; margin-top:4px; margin-bottom:12px; flex-wrap:wrap;">
         <div class="tag-btn" onclick="selectTag('💜 любимчик', this)">💜 любимчик</div>
         <div class="tag-btn" onclick="selectTag('⚠️ странный', this)">⚠️ странный</div>
@@ -131,9 +137,9 @@
         <div class="tag-btn" onclick="selectTag('', this)">✖️ снять</div>
     </div>
     <input type="hidden" id="eTag">
-<label style="color:#666; font-size:12px; margin-top:10px; display:block;">Личные заметки</label>
-    <textarea id="eNotes" rows="4" placeholder="Например: Любит косплей на Аду Вонг, обещала сигну..." style="width:100%; padding:12px; margin-bottom:12px; margin-top:4px; border-radius:8px; border:1px solid #2a2a3f; background:var(--input); color:white; resize:vertical; font-family:inherit; outline:none;"></textarea>
 
+    <label style="color:#666; font-size:12px; margin-top:10px; display:block;">Личные заметки</label>
+    <textarea id="eNotes" rows="4" placeholder="Например: Любит косплей на Аду Вонг, обещала сигну..." oninput="autoSave()" style="width:100%; padding:12px; margin-bottom:12px; margin-top:4px; border-radius:8px; border:1px solid #2a2a3f; background:var(--input); color:white; resize:vertical; font-family:inherit; outline:none;"></textarea>
 
     <div style="margin-top:20px">
         <label>История по годам:</label>
@@ -141,8 +147,7 @@
         <div id="historyFields" style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:15px"></div>
     </div>
 
-    <button onclick="saveData()" style="width:100%; margin-top:30px">Сохранить изменения</button>
-    <button onclick="deleteCurrent()" class="danger" style="width:100%; margin-top:10px; background:transparent; color:#666">Удалить донатера</button>
+    <div id="saveStatus" style="text-align:center; color:#666; font-size:13px; font-weight:bold; margin-top:30px; height:20px; transition:0.3s;"></div>
 </div>
 
 <script>
@@ -156,6 +161,8 @@ let state = {
     isLogin: true,
     currentEditId: null
 };
+
+let saveTimeout; // Таймер для автосохранения
 
 const MONTHS = ["Янв","Фев","Мар","Апр","Май","Июн","Июл","Авг","Сен","Окт","Ноя","Дек"];
 const getCurKey = () => `${MONTHS[new Date().getMonth()]} ${new Date().getFullYear()}`;
@@ -208,25 +215,30 @@ function renderTable() {
     const q = document.getElementById('search').value.toLowerCase();
     const tbody = document.getElementById('tbody');
     tbody.innerHTML = '';
-// --- ПОДСЧЁТ СТАТИСТИКИ ДЛЯ ДАШБОРДА ---
+
+    // --- ПОДСЧЁТ СТАТИСТИКИ ДЛЯ ДАШБОРДА ---
     let totalAllTime = 0;
     let totalThisMonth = 0;
+    let activeDonatorsCount = 0;
     const currentM = getCurKey();
 
     state.donators.forEach(d => {
         totalAllTime += d.total || 0;
         totalThisMonth += (d.history || {})[currentM] || 0;
+        if (!d.isPaused) activeDonatorsCount++; // Считаем только активных для статистики (по желанию)
     });
 
-    document.getElementById('statCount').innerText = state.donators.length;
+    document.getElementById('statCount').innerText = activeDonatorsCount;
     document.getElementById('statMonth').innerText = totalThisMonth + "€";
     document.getElementById('statTotal').innerText = totalAllTime + "€";
-    // --------------------------------------
-
 
     const filtered = state.donators
         .filter(d => d.name.toLowerCase().includes(q))
-        .sort((a, b) => b.total - a.total);
+        .sort((a, b) => {
+            // Сначала сортируем по паузе (на паузе - вниз), затем по донатам
+            if (a.isPaused === b.isPaused) return b.total - a.total;
+            return a.isPaused ? 1 : -1;
+        });
 
     filtered.forEach(d => {
         const curMonth = (d.history || {})[getCurKey()] || 0;
@@ -237,14 +249,17 @@ function renderTable() {
             ? 'background: rgba(255, 215, 0, 0.2); color: #ffd700; padding: 4px 8px; border-radius: 6px; border: 1px solid gold; font-weight: bold; display: inline-block;' 
             : '';
         const bdayIcon = isBdaySoon ? ' 🎂' : '';
-// Берем только смайлик (первый символ до пробела)
-        const tagEmoji = d.tag ? d.tag.split(' ')[0] : '';
+
+        // Берем только смайлик (первый символ до пробела)
+        const tagEmoji = d.tag ? Array.from(d.tag)[0] : '';
 
         const tr = document.createElement('tr');
+        if (d.isPaused) tr.className = 'paused-row'; // Применяем полупрозрачность, если на паузе
+
         tr.innerHTML = `
             <td>
                 <span style="background:rgba(124,58,237,0.1); color:#a78bfa; padding:4px 8px; border-radius:4px; font-size:12px; font-weight:bold">${getVIP(d.total)}</span>
-                <span style="font-size:16px; margin-left:8px; cursor:help;" title="${d.tag}">${tagEmoji}</span>
+                <span style="font-size:16px; margin-left:8px; cursor:help;" title="${d.tag || ''}">${tagEmoji}</span>
             </td>
             <td><span style="${nameStyle}">${d.name}${bdayIcon}</span></td>
 
@@ -259,22 +274,23 @@ function renderTable() {
                 
                 <div style="display:flex; gap:2px; background:var(--input); padding:2px; border-radius:6px; margin-left:5px; border:1px solid #2a2a3f;">
                     <input type="number" id="custom_${d.id}" placeholder="€" style="width:55px; margin:0; padding:5px; background:transparent; border:none; font-size:12px; text-align:center;">
-                    <button onclick="addCustomMoney('${d.id}')" style="background:#333; padding:2px 8px; border-radius:4px; font-size:12px; width:auto;">+</button>
+                    <button onclick="addCustomMoney('${d.id}')" style="background:#333; padding:2px 8px; border-radius:4px; font-size:12px; width:auto; margin:0;">+</button>
                 </div>
 
-                <button class="secondary" style="padding:6px 12px; margin-left:10px" onclick="openPanel('${d.id}')">✎</button>
+                <button class="secondary" style="padding:6px 12px; margin-left:10px" onclick="openPanel('${d.id}')" title="Редактировать">✎</button>
+                <button class="${d.isPaused ? 'warning' : 'secondary'}" style="padding:6px 12px;" onclick="togglePause('${d.id}')" title="${d.isPaused ? 'Снять с паузы' : 'Поставить на паузу'}">⏸</button>
+                <button class="danger" style="padding:6px 12px;" onclick="deleteDonator('${d.id}')" title="Удалить">✖</button>
             </td>
         `;
         tbody.appendChild(tr);
     });
 }
 
-
 async function addDonator() {
     const name = document.getElementById('newName').value;
     if (!name) return;
     showLoading(true);
-    const newEntry = { name, total: 0, history: {}, user_id: state.user.id };
+    const newEntry = { name, total: 0, history: {}, user_id: state.user.id, isPaused: false };
     const { data, error } = await db.from('donators').insert([newEntry]).select();
     if (!error) {
         state.donators.push(data[0]);
@@ -298,7 +314,28 @@ async function quickAdd(id, amount) {
     await db.from('donators').update({ history: d.history, total: d.total }).eq('id', id);
 }
 
-// --- PANEL LOGIC ---
+// --- УДАЛЕНИЕ И ПАУЗА (Новые функции) ---
+async function deleteDonator(id) {
+    if (!confirm("Удалить донатера навсегда? Это действие нельзя отменить.")) return;
+    showLoading(true);
+    await db.from('donators').delete().eq('id', id);
+    state.donators = state.donators.filter(x => x.id !== id);
+    renderTable();
+    showLoading(false);
+}
+
+async function togglePause(id) {
+    const d = state.donators.find(x => x.id === id);
+    if(!d) return;
+    
+    d.isPaused = !d.isPaused; // Переключаем статус
+    showLoading(true);
+    await db.from('donators').update({ isPaused: d.isPaused }).eq('id', id);
+    renderTable();
+    showLoading(false);
+}
+
+// --- PANEL LOGIC & AUTO-SAVE ---
 function openPanel(id) {
     state.currentEditId = id;
     const d = state.donators.find(x => x.id === id);
@@ -309,14 +346,20 @@ function openPanel(id) {
     document.getElementById('eTG').value = d.telegram || "";
     document.getElementById('eTT').value = d.tiktok || "";
     document.getElementById('eBD').value = d.birthday || "";
-document.getElementById('eNotes').value = d.notes || "";
-document.getElementById('eTag').value = d.tag || ""; document.querySelectorAll('.tag-btn').forEach(b => { b.classList.remove('active'); if (d.tag && b.innerText === d.tag) b.classList.add('active'); });
+    document.getElementById('eNotes').value = d.notes || "";
+    
+    document.getElementById('eTag').value = d.tag || ""; 
+    document.querySelectorAll('.tag-btn').forEach(b => { 
+        b.classList.remove('active'); 
+        if (d.tag && b.innerText === d.tag) b.classList.add('active'); 
+    });
 
     const ys = document.getElementById('yearSelect');
     ys.innerHTML = [2024, 2025, 2026, 2027].map(y => `<option value="${y}">${y}</option>`).join('');
     ys.value = new Date().getFullYear();
     
     renderHistoryFields();
+    document.getElementById('saveStatus').innerText = ''; // Очищаем статус при открытии
     document.getElementById('panel').classList.add('open');
 }
 
@@ -332,7 +375,7 @@ function renderHistoryFields() {
             <div style="background:var(--input); padding:8px; border-radius:6px; border: 1px solid #2a2a3f;">
                 <div style="font-size:10px; color:#666; margin-bottom:4px">${m}</div>
                 <div style="display:flex; align-items:center; gap:4px">
-                    <input type="number" step="0.01" min="0" class="h-input" data-key="${key}" value="${val}" 
+                    <input type="number" step="0.01" min="0" class="h-input" data-key="${key}" value="${val}" oninput="autoSave()"
                            style="margin:0; padding:2px; font-size:14px; border:none; background:transparent; color:white; width:100%; outline:none;">
                     <span style="font-size:14px; color:#666; font-weight:bold">€</span>
                 </div>
@@ -341,9 +384,31 @@ function renderHistoryFields() {
     }).join('');
 }
 
-async function saveData() {
-    showLoading(true);
+// Автосохранение
+function autoSave() {
+    const status = document.getElementById('saveStatus');
+    status.innerText = 'Сохранение...';
+    status.style.color = '#888';
+
+    clearTimeout(saveTimeout);
+    saveTimeout = setTimeout(() => {
+        saveData(true);
+    }, 1000); 
+}
+
+function selectTag(val, btn) {
+    document.getElementById('eTag').value = val;
+    document.querySelectorAll('.tag-btn').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    autoSave();
+}
+
+async function saveData(isAuto = false) {
+    if (!isAuto) showLoading(true); // Показываем полоску только если сохраняем не фоном (на будущее)
+
     const d = state.donators.find(x => x.id === state.currentEditId);
+    if (!d) return;
+
     const inputs = document.querySelectorAll('.h-input');
     
     inputs.forEach(i => {
@@ -357,26 +422,24 @@ async function saveData() {
     d.telegram = document.getElementById('eTG').value;
     d.tiktok = document.getElementById('eTT').value;
     d.birthday = document.getElementById('eBD').value;
-d.notes = document.getElementById('eNotes').value;
-d.tag = document.getElementById('eTag').value;
+    d.notes = document.getElementById('eNotes').value;
+    d.tag = document.getElementById('eTag').value;
     
     d.total = Object.values(d.history).reduce((a, b) => a + b, 0);
 
     await db.from('donators').update(d).eq('id', d.id);
+    
+    renderTable(); // Обновляем таблицу на фоне
 
-    closePanel();
-    renderTable();
-    showLoading(false);
-}
-
-async function deleteCurrent() {
-    if (!confirm("Удалить донатера навсегда?")) return;
-    showLoading(true);
-    await db.from('donators').delete().eq('id', state.currentEditId);
-    state.donators = state.donators.filter(x => x.id !== state.currentEditId);
-    closePanel();
-    renderTable();
-    showLoading(false);
+    if (isAuto) {
+        const status = document.getElementById('saveStatus');
+        status.innerText = '✓ Сохранено';
+        status.style.color = '#10b981';
+        setTimeout(() => { if (status.innerText === '✓ Сохранено') status.innerText = ''; }, 2000);
+    } else {
+        closePanel();
+        showLoading(false);
+    }
 }
 
 // --- UTILS ---
@@ -393,7 +456,6 @@ function getVIP(t) {
     if (t >= 50)   return "VIP 1 START";
     return "VIP 0 NEW";
 }
-
 
 function getNextTarget(t) {
     const goals = [50, 150, 300, 500, 750, 1000, 1500, 2500, 4000, 6000];
@@ -414,28 +476,19 @@ function addCustomMoney(id) {
         alert("Введите число больше 0");
     }
 }
-// Проверка: скоро ли день рождения (в ближайшие 7 дней)
+
 function checkBirthday(bdayStr) {
     if (!bdayStr) return false;
-    
     const today = new Date();
-    today.setHours(0, 0, 0, 0); // Обнуляем время для точности
-    
+    today.setHours(0, 0, 0, 0);
     const bday = new Date(bdayStr);
     const currentYear = today.getFullYear();
-    
-    // Устанавливаем день рождения на текущий год
     bday.setFullYear(currentYear);
-    
-    // Если день рождения в этом году уже прошел, проверяем следующий год
     if (bday < today) {
         bday.setFullYear(currentYear + 1);
     }
-    
     const diffTime = bday - today;
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
-    // Возвращаем true, если до ДР от 0 до 7 дней
     return diffDays >= 0 && diffDays <= 7;
 }
 
@@ -446,10 +499,8 @@ function exportToCSV() {
         return;
     }
 
-    // 1. Создаем заголовки колонок
-    const headers = ["Имя", "Никнейм", "Telegram", "TikTok", "День рождения", "Всего донатов", "Заметки"];
+    const headers = ["Имя", "Никнейм", "Telegram", "TikTok", "День рождения", "Метка", "Статус", "Всего донатов", "Заметки"];
     
-    // 2. Собираем данные всех донатеров
     const rows = state.donators.map(d => {
         return [
             `"${(d.name || "").replace(/"/g, '""')}"`,
@@ -457,15 +508,14 @@ function exportToCSV() {
             `"${(d.telegram || "").replace(/"/g, '""')}"`,
             `"${(d.tiktok || "").replace(/"/g, '""')}"`,
             `"${(d.birthday || "").replace(/"/g, '""')}"`,
+            `"${(d.tag || "").replace(/"/g, '""')}"`,
+            d.isPaused ? '"На паузе"' : '"Активен"',
             d.total || 0,
             `"${(d.notes || "").replace(/"/g, '""')}"`
         ].join(",");
     });
 
-    // 3. Склеиваем всё вместе (\uFEFF нужен, чтобы Excel правильно читал русский язык)
     const csvContent = "\uFEFF" + headers.join(",") + "\n" + rows.join("\n");
-    
-    // 4. Запускаем скачивание файла
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -476,14 +526,6 @@ function exportToCSV() {
     document.body.removeChild(link);
 }
 
-function selectTag(val, btn) {
-    document.getElementById('eTag').value = val;
-    document.querySelectorAll('.tag-btn').forEach(b => b.classList.remove('active'));
-    if (btn) btn.classList.add('active');
-}
-
 </script>
 </body>
 </html>
-
-
