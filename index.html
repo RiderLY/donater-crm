@@ -178,14 +178,22 @@ function renderTable() {
 
     const filtered = state.donators
         .filter(d => d.name.toLowerCase().includes(q))
-        .sort((a,b) => b.total - a.total);
+        .sort((a, b) => b.total - a.total);
 
     filtered.forEach(d => {
         const curMonth = (d.history || {})[getCurKey()] || 0;
+        
+        // --- ПРОВЕРКА ДНЯ РОЖДЕНИЯ ---
+        const isBdaySoon = checkBirthday(d.birthday);
+        const nameStyle = isBdaySoon 
+            ? 'background: rgba(255, 215, 0, 0.2); color: #ffd700; padding: 4px 8px; border-radius: 6px; border: 1px solid gold; font-weight: bold; display: inline-block;' 
+            : '';
+        const bdayIcon = isBdaySoon ? ' 🎂' : '';
+
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td><span style="background:rgba(124,58,237,0.1); color:#a78bfa; padding:4px 8px; border-radius:4px; font-size:12px; font-weight:bold">${getVIP(d.total)}</span></td>
-            <td>${d.name}</td>
+            <td><span style="${nameStyle}">${d.name}${bdayIcon}</span></td>
             <td>${curMonth}€</td>
             <td><strong style="color:var(--primary)">${d.total}€</strong></td>
             <td style="font-size:12px; color:#666">${getNextTarget(d.total)}</td>
@@ -206,6 +214,7 @@ function renderTable() {
         tbody.appendChild(tr);
     });
 }
+
 
 async function addDonator() {
     const name = document.getElementById('newName').value;
@@ -347,6 +356,31 @@ function addCustomMoney(id) {
         alert("Введите число больше 0");
     }
 }
+// Проверка: скоро ли день рождения (в ближайшие 7 дней)
+function checkBirthday(bdayStr) {
+    if (!bdayStr) return false;
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Обнуляем время для точности
+    
+    const bday = new Date(bdayStr);
+    const currentYear = today.getFullYear();
+    
+    // Устанавливаем день рождения на текущий год
+    bday.setFullYear(currentYear);
+    
+    // Если день рождения в этом году уже прошел, проверяем следующий год
+    if (bday < today) {
+        bday.setFullYear(currentYear + 1);
+    }
+    
+    const diffTime = bday - today;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    // Возвращаем true, если до ДР от 0 до 7 дней
+    return diffDays >= 0 && diffDays <= 7;
+}
+
 </script>
 </body>
 </html>
