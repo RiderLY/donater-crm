@@ -73,11 +73,13 @@
         </div>
     </div>
 
-    <div style="display:flex; gap:15px; margin-bottom:25px">
+   <div style="display:flex; gap:15px; margin-bottom:25px">
         <input id="search" placeholder="Поиск по базе..." style="margin:0" oninput="renderTable()">
         <input id="newName" placeholder="Имя нового участника" style="margin:0; width:250px">
         <button onclick="addDonator()">Добавить</button>
+        <button class="secondary" onclick="exportToCSV()" style="margin-left:auto;">Скачать CSV</button>
     </div>
+
 
     <div class="table-container">
         <table>
@@ -414,6 +416,43 @@ function checkBirthday(bdayStr) {
     
     // Возвращаем true, если до ДР от 0 до 7 дней
     return diffDays >= 0 && diffDays <= 7;
+}
+
+// --- ЭКСПОРТ В CSV ---
+function exportToCSV() {
+    if (state.donators.length === 0) {
+        alert("База пуста, нечего скачивать!");
+        return;
+    }
+
+    // 1. Создаем заголовки колонок
+    const headers = ["Имя", "Никнейм", "Telegram", "TikTok", "День рождения", "Всего донатов", "Заметки"];
+    
+    // 2. Собираем данные всех донатеров
+    const rows = state.donators.map(d => {
+        return [
+            `"${(d.name || "").replace(/"/g, '""')}"`,
+            `"${(d.nick || "").replace(/"/g, '""')}"`,
+            `"${(d.telegram || "").replace(/"/g, '""')}"`,
+            `"${(d.tiktok || "").replace(/"/g, '""')}"`,
+            `"${(d.birthday || "").replace(/"/g, '""')}"`,
+            d.total || 0,
+            `"${(d.notes || "").replace(/"/g, '""')}"`
+        ].join(",");
+    });
+
+    // 3. Склеиваем всё вместе (\uFEFF нужен, чтобы Excel правильно читал русский язык)
+    const csvContent = "\uFEFF" + headers.join(",") + "\n" + rows.join("\n");
+    
+    // 4. Запускаем скачивание файла
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Stellar_CRM_Backup_${new Date().toISOString().slice(0,10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 }
 
 </script>
