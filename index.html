@@ -310,6 +310,7 @@ function openPanel(id) {
     document.getElementById('eTT').value = d.tiktok || "";
     document.getElementById('eBD').value = d.birthday || "";
 document.getElementById('eNotes').value = d.notes || "";
+document.getElementById('eTag').value = d.tag || ""; document.querySelectorAll('.tag-btn').forEach(b => { b.classList.remove('active'); if (d.tag && b.innerText === d.tag) b.classList.add('active'); });
 
     const ys = document.getElementById('yearSelect');
     ys.innerHTML = [2024, 2025, 2026, 2027].map(y => `<option value="${y}">${y}</option>`).join('');
@@ -357,6 +358,7 @@ async function saveData() {
     d.tiktok = document.getElementById('eTT').value;
     d.birthday = document.getElementById('eBD').value;
 d.notes = document.getElementById('eNotes').value;
+d.tag = document.getElementById('eTag').value;
     
     d.total = Object.values(d.history).reduce((a, b) => a + b, 0);
 
