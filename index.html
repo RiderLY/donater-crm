@@ -101,6 +101,9 @@
 
     <label style="color:#666; font-size:12px">Дата рождения</label>
     <input id="eBD" type="date" style="color-scheme: dark;">
+<label style="color:#666; font-size:12px; margin-top:10px; display:block;">Личные заметки</label>
+    <textarea id="eNotes" rows="4" placeholder="Например: Любит косплей на Аду Вонг, обещала сигну..." style="width:100%; padding:12px; margin-bottom:12px; margin-top:4px; border-radius:8px; border:1px solid #2a2a3f; background:var(--input); color:white; resize:vertical; font-family:inherit; outline:none;"></textarea>
+
 
     <div style="margin-top:20px">
         <label>История по годам:</label>
@@ -255,6 +258,7 @@ function openPanel(id) {
     document.getElementById('eTG').value = d.telegram || "";
     document.getElementById('eTT').value = d.tiktok || "";
     document.getElementById('eBD').value = d.birthday || "";
+document.getElementById('eNotes').value = d.notes || "";
 
     const ys = document.getElementById('yearSelect');
     ys.innerHTML = [2024, 2025, 2026, 2027].map(y => `<option value="${y}">${y}</option>`).join('');
@@ -301,6 +305,7 @@ async function saveData() {
     d.telegram = document.getElementById('eTG').value;
     d.tiktok = document.getElementById('eTT').value;
     d.birthday = document.getElementById('eBD').value;
+d.notes = document.getElementById('eNotes').value;
     
     d.total = Object.values(d.history).reduce((a, b) => a + b, 0);
 
