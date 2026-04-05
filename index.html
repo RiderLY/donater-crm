@@ -8,6 +8,10 @@
     <style>
         :root { --primary: #7c3aed; --bg: #0f0f14; --card: #181825; --input: #232336; --text: #eee; --danger: #ef4444; }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', system-ui, sans-serif; }
+.tag-btn { background: var(--input); padding: 6px 10px; border-radius: 6px; font-size: 12px; cursor: pointer; border: 1px solid #2a2a3f; color: #888; transition: 0.2s; white-space: nowrap; user-select: none; }
+        .tag-btn:hover { border-color: #666; }
+        .tag-btn.active { background: rgba(124, 58, 237, 0.2); border-color: var(--primary); color: white; }
+
         body { background: var(--bg); color: var(--text); overflow-x: hidden; }
         
         .flex-center { height: 100vh; display: flex; justify-content: center; align-items: center; }
@@ -118,6 +122,15 @@
 
     <label style="color:#666; font-size:12px">Дата рождения</label>
     <input id="eBD" type="date" style="color-scheme: dark;">
+<label style="color:#666; font-size:12px; margin-top:10px; display:block;">Быстрая метка</label>
+    <div style="display:flex; gap:5px; margin-top:4px; margin-bottom:12px; flex-wrap:wrap;">
+        <div class="tag-btn" onclick="selectTag('💜 любимчик', this)">💜 любимчик</div>
+        <div class="tag-btn" onclick="selectTag('⚠️ странный', this)">⚠️ странный</div>
+        <div class="tag-btn" onclick="selectTag('🎁 перспективный', this)">🎁 перспективный</div>
+        <div class="tag-btn" onclick="selectTag('🧊 холодный', this)">🧊 холодный</div>
+        <div class="tag-btn" onclick="selectTag('', this)">✖️ снять</div>
+    </div>
+    <input type="hidden" id="eTag">
 <label style="color:#666; font-size:12px; margin-top:10px; display:block;">Личные заметки</label>
     <textarea id="eNotes" rows="4" placeholder="Например: Любит косплей на Аду Вонг, обещала сигну..." style="width:100%; padding:12px; margin-bottom:12px; margin-top:4px; border-radius:8px; border:1px solid #2a2a3f; background:var(--input); color:white; resize:vertical; font-family:inherit; outline:none;"></textarea>
 
@@ -224,11 +237,12 @@ function renderTable() {
             ? 'background: rgba(255, 215, 0, 0.2); color: #ffd700; padding: 4px 8px; border-radius: 6px; border: 1px solid gold; font-weight: bold; display: inline-block;' 
             : '';
         const bdayIcon = isBdaySoon ? ' 🎂' : '';
+const tagHtml = d.tag ? `<br><span style="font-size:10px; background:#232336; padding:2px 6px; border-radius:4px; border:1px solid #2a2a3f; color:#ddd; margin-top:4px; display:inline-block">${d.tag}</span>` : '';
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td><span style="background:rgba(124,58,237,0.1); color:#a78bfa; padding:4px 8px; border-radius:4px; font-size:12px; font-weight:bold">${getVIP(d.total)}</span></td>
-            <td><span style="${nameStyle}">${d.name}${bdayIcon}</span></td>
+            <td><span style="${nameStyle}">${d.name}${bdayIcon}</span>${tagHtml}</td>
             <td>${curMonth}€</td>
             <td><strong style="color:var(--primary)">${d.total}€</strong></td>
             <td style="font-size:12px; color:#666">${getNextTarget(d.total)}</td>
@@ -453,6 +467,12 @@ function exportToCSV() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+}
+
+function selectTag(val, btn) {
+    document.getElementById('eTag').value = val;
+    document.querySelectorAll('.tag-btn').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
 }
 
 </script>
